@@ -19,51 +19,77 @@ export default async function UnggahPage() {
   if (!akun) redirect("/")
   if (akun.role === "guru") redirect("/nilai")
 
-  const [ujian, sekolah, berkas] = await Promise.all([
-    infoUjian(),
-    namaSekolah(akun.sekolah_id),
-    berkasSiswa(akun, await namaSekolah(akun.sekolah_id)),
-  ])
-
+  const ujian = await infoUjian()
+  const sekolah = await namaSekolah(akun.sekolah_id)
+  const berkas = await berkasSiswa(akun, sekolah)
   const tutupLewat = ujian.tutup ? new Date(ujian.tutup) < new Date() : false
 
   return (
-    <div className="space-y-6 max-w-2xl">
-      <div>
-        <h1 className="text-2xl font-bold">Kumpulkan berkas</h1>
-        <p className="text-muted-foreground">
-          {ujian.nama} · {ujian.tahunAjaran} Semester {ujian.semester}
-        </p>
-        <p className="text-muted-foreground text-sm">
+    <div className="mx-auto max-w-3xl space-y-5">
+      <section className="rounded-2xl border border-[#e2e8f0] bg-white p-5 sm:p-6">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-[#0f766e]">Pengumpulan berkas</p>
+        <h1 className="mt-1 text-xl font-semibold text-[#0f172a]">{ujian.nama}</h1>
+        <p className="mt-1 text-sm text-[#64748b]">
           {akun.nama} · NIS {akun.nis ?? "-"} · {sekolah}
+          {akun.kelas ? ` · Kelas ${akun.kelas}` : ""}
         </p>
-      </div>
-
-      {ujian.deskripsi && (
-        <div className="rounded-lg border p-4 text-sm text-muted-foreground">{ujian.deskripsi}</div>
-      )}
+        {ujian.deskripsi && <p className="mt-3 text-[13px] text-[#334155]">{ujian.deskripsi}</p>}
+      </section>
 
       {tutupLewat ? (
-        <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
+        <div className="rounded-2xl border border-[#fecaca] bg-[#fef2f2] p-5 text-sm text-[#b91c1c]">
           Batas pengumpulan sudah lewat ({ujian.tutup}). Hubungi guru ICT bila masih perlu mengumpulkan.
         </div>
       ) : (
-        <UploadForm maksMb={MAKS_MB} tutup={ujian.tutup} />
+        <section className="rounded-2xl border border-[#e2e8f0] bg-white p-5 sm:p-6">
+          <UploadForm maksMb={MAKS_MB} tutup={ujian.tutup} />
+        </section>
       )}
 
       {berkas.length > 0 && (
-        <div className="rounded-lg border p-4 space-y-1">
-          <p className="text-sm font-medium">Berkas yang sudah ada</p>
-          {berkas.map((b) => (
-            <p key={b.id} className="text-xs text-muted-foreground break-all">
-              {b.name} · {new Date(b.createdTime).toLocaleString("id-ID")}
-            </p>
-          ))}
-          <p className="text-xs text-muted-foreground">Mengunggah berkas baru akan mengganti berkas lama.</p>
-        </div>
+        <section className="rounded-2xl border border-[#e2e8f0] bg-white p-5">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-[#94a3b8]">Berkas tersimpan</p>
+          <div className="mt-2 space-y-2">
+            {berkas.map((b) => (
+              <div
+                key={b.id}
+                className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#e2e8f0] bg-[#fbfdff] px-3 py-2"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-[13px] font-medium text-[#0f172a]">{b.name}</p>
+                  <p className="text-[11px] text-[#64748b]">
+                    {new Date(b.createdTime).toLocaleString("id-ID")}
+                    {b.size ? ` · ${(Number(b.size) / 1048576).toFixed(2)} MB` : ""}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <a
+                    href={`/api/berkas/${b.id}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="rounded-lg border border-[#e2e8f0] px-2.5 py-1 text-[11px] font-medium text-[#334155] hover:bg-white"
+                  >
+                    Lihat
+                  </a>
+                  <a
+                    href={`/api/berkas/${b.id}?mode=unduh`}
+                    className="rounded-lg border border-[#e2e8f0] px-2.5 py-1 text-[11px] font-medium text-[#334155] hover:bg-white"
+                  >
+                    Unduh
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="mt-3 text-[11px] text-[#94a3b8]">
+            Mengunggah berkas baru akan mengganti berkas lama.
+          </p>
+        </section>
       )}
 
-      <Link href="/" className="text-sm text-primary underline">← Kembali ke beranda</Link>
+      <Link href="/" className="inline-block text-[13px] font-medium text-[#0f766e] hover:underline">
+        ← Kembali ke beranda
+      </Link>
     </div>
   )
 }

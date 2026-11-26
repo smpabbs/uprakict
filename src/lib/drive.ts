@@ -140,6 +140,31 @@ export async function hapusBerkas(id: string): Promise<void> {
   if (!res.ok && res.status !== 404) throw new Error("Gagal menghapus berkas Drive")
 }
 
+export async function tokenInternal(): Promise<string> {
+  return token()
+}
+
+/** Metadata satu berkas (nama, mime, ukuran, link). */
+export async function infoBerkas(id: string): Promise<BerkasDrive | null> {
+  try {
+    return (await api(
+      `/files/${id}?fields=id,name,size,mimeType,createdTime,webViewLink`
+    )) as BerkasDrive
+  } catch {
+    return null
+  }
+}
+
+/** Ambil isi berkas dari Drive (dipakai server untuk menyajikan ke pengguna). */
+export async function unduhBerkas(id: string): Promise<Response> {
+  const res = await fetch(`${DRIVE}/files/${id}?alt=media`, {
+    headers: { Authorization: "Bearer " + (await token()) },
+    cache: "no-store",
+  })
+  if (!res.ok) throw new Error("Gagal mengambil berkas dari penyimpanan")
+  return res
+}
+
 /* ---------------- Google Sheets (rekap nilai) ---------------- */
 
 async function sheets(path: string, init?: RequestInit & { json?: unknown }) {

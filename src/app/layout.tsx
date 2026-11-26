@@ -1,22 +1,22 @@
-import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
-import './globals.css'
-
-const inter = Inter({ subsets: ['latin'] })
+import type { Metadata, Viewport } from "next"
+import "./globals.css"
+import { SEKOLAH_NAMA } from "@/lib/env"
 
 export const metadata: Metadata = {
-  title: 'Pengumpulan Ujian Praktik ICT',
-  description: 'Portal pengumpulan ujian praktik ICT untuk siswa dan guru',
+  title: "Ujian Praktik ICT · " + SEKOLAH_NAMA,
+  description: "Pengumpulan dan penilaian Ujian Praktik ICT — SMP ABBS",
 }
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode
-}>) {
+export const viewport: Viewport = {
+  themeColor: "#0f766e",
+  width: "device-width",
+  initialScale: 1,
+}
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="id">
-      <body className={inter.className}>{children}</body>
+      <body className="antialiased">{children}</body>
     </html>
   )
 }
