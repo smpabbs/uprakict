@@ -85,3 +85,34 @@ export async function siswaSekolah(sekolahId: string): Promise<Akun[]> {
   if (error) throw new Error("Gagal membaca daftar siswa: " + error.message)
   return (data ?? []) as Akun[]
 }
+
+/** Nama mapel yang dianggap sebagai ujian praktik ICT. */
+const POLA_MAPEL_ICT = /ICT/i
+
+/**
+ * Kelas yang benar-benar ditugaskan ke guru di LMS (`guru_mengajar`),
+ * dibatasi hanya pada mata pelajaran ICT. Inilah satu-satunya sumber hak akses kelas.
+ */
+export async function kelasDiampu(guruId: string): Promise<string[]> {
+  const db = admin()
+  const [{ data: mapel }, { data: ajar }] = await Promise.all([
+    db.from("mata_pelajaran").select("id,nama"),
+    db.from("guru_mengajar").select("kelas,mapel_id").eq("guru_id", guruId),
+  ])
+  const idIct = new Set(
+    (mapel ?? []).filter((m: { nama: string }) => POLA_MAPEL_ICT.test(m.nama ?? "")).map((m: { id: string }) => m.id)
+  )
+  const kelas = new Set<string>()
+  for (const row of (ajar ?? []) as { kelas: string | null; mapel_id: string }[]) {
+    if (!row.kelas) continue
+    if (!idIct.has(row.mapel_id)) continue
+    kelas.add(String(row.kelas).trim().toUpperCase())
+  }
+  return Array.from(kelas).sort()
+}
+
+/** Apakah guru ditugaskan mengajar ICT di kelas tertentu. */
+export async function bolehKelas(guruId: string, kelas: string): Promise<boolean> {
+  const daftar = await kelasDiampu(guruId)
+  return daftar.includes(String(kelas).trim().toUpperCase())
+}

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
-import { ambilAkun } from "@/lib/lms"
+import { ambilAkun, bolehKelas } from "@/lib/lms"
 import { namaSekolah, simpanNilaiSiswa } from "@/lib/ujian"
 
 export const runtime = "edge"
@@ -40,6 +40,10 @@ export async function POST(request: Request) {
   }
 
   try {
+    if (!(await bolehKelas(guru.id, kelas))) {
+      asal.searchParams.set("e", `Anda tidak ditugaskan mengajar ICT di kelas ${kelas || "-"}.`)
+      return NextResponse.redirect(asal, 303)
+    }
     const sekolah = await namaSekolah(guru.sekolah_id)
     await simpanNilaiSiswa({
       namaSekolahStr: sekolah,

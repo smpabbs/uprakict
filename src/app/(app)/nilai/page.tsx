@@ -1,9 +1,8 @@
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/server"
-import { ambilAkun, siswaSekolah } from "@/lib/lms"
+import { ambilAkun, siswaSekolah, kelasDiampu } from "@/lib/lms"
 import { infoUjian, namaSekolah, rekapSekolah } from "@/lib/ujian"
-import { kelasGuru } from "@/lib/prefs"
 
 export const runtime = "edge"
 export const dynamic = "force-dynamic"
@@ -23,17 +22,17 @@ export default async function NilaiPage({
   if (!akun) redirect("/")
   if (akun.role !== "guru") redirect("/")
 
-  const [ujian, sekolah, daftar, pref] = await Promise.all([
+  const [ujian, sekolah, daftar, diampu] = await Promise.all([
     infoUjian(),
     namaSekolah(akun.sekolah_id),
     siswaSekolah(akun.sekolah_id ?? ""),
-    kelasGuru(akun.username ?? akun.id),
+    kelasDiampu(akun.id),
   ])
   const { baris } = await rekapSekolah(daftar, sekolah)
 
-  const semuaKelas = Array.from(new Set(daftar.map((d) => d.kelas ?? "-"))).sort()
-  const kelasSaya = pref.length ? pref.filter((k) => semuaKelas.includes(k)) : []
-  const kelasAktif = sp.kelas && semuaKelas.includes(sp.kelas) ? sp.kelas : kelasSaya[0] ?? semuaKelas[0] ?? "-"
+  // Kelas yang tampil = tugas mengajar ICT di LMS yang ada siswanya.
+  const semuaKelas = diampu.filter((k) => daftar.some((d) => (d.kelas ?? "").toUpperCase() === k))
+  const kelasAktif = sp.kelas && semuaKelas.includes(sp.kelas) ? sp.kelas : semuaKelas[0] ?? "-"
 
   const isi = baris.filter((b) => b.kelas === kelasAktif)
   const terkumpul = isi.filter((b) => b.berkas).length
@@ -193,36 +192,6 @@ export default async function NilaiPage({
         </div>
       </section>
 
-      <details className="rounded-2xl border border-[#e2e8f0] bg-white p-4">
-        <summary className="cursor-pointer text-[13px] font-semibold text-[#0f172a]">
-          Atur kelas yang saya ampu {kelasSaya.length > 0 && <span className="text-[#0f766e]">({kelasSaya.join(", ")})</span>}
-        </summary>
-        <p className="mt-2 text-[12px] text-[#64748b]">
-          Pilih kelas yang Anda ajar. Pilihan ini menentukan tampilan awal halaman rekap dan beranda.
-        </p>
-        <form method="POST" action="/api/kelas-saya" className="mt-3">
-          <div className="flex flex-wrap gap-2">
-            {semuaKelas.map((k) => (
-              <label
-                key={k}
-                className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-[#e2e8f0] px-2.5 py-1.5 text-[12px] font-medium text-[#334155] has-[:checked]:border-[#0f766e] has-[:checked]:bg-[#f0fdfa]"
-              >
-                <input
-                  type="checkbox"
-                  name="kelas"
-                  value={k}
-                  defaultChecked={kelasSaya.includes(k)}
-                  className="h-3.5 w-3.5 accent-[#0f766e]"
-                />
-                {k}
-              </label>
-            ))}
-          </div>
-          <button className="mt-3 rounded-lg bg-[#0f172a] px-4 py-2 text-[12px] font-semibold text-white">
-            Simpan kelas saya
-          </button>
-        </form>
-      </details>
     </div>
   )
 }

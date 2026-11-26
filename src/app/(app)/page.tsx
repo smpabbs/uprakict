@@ -1,9 +1,8 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import { ambilAkun, siswaSekolah } from "@/lib/lms"
+import { ambilAkun, siswaSekolah, kelasDiampu } from "@/lib/lms"
 import { infoUjian, namaSekolah, berkasSiswa, rekapSekolah } from "@/lib/ujian"
-import { kelasGuru } from "@/lib/prefs"
 
 export const runtime = "edge"
 export const dynamic = "force-dynamic"
@@ -35,9 +34,10 @@ export default async function Beranda() {
   const [ujian, sekolah] = await Promise.all([infoUjian(), namaSekolah(akun.sekolah_id)])
 
   if (akun.role === "guru") {
-    const [daftar, pref] = await Promise.all([siswaSekolah(akun.sekolah_id ?? ""), kelasGuru(akun.username ?? akun.id)])
+    const [daftar, diampu] = await Promise.all([siswaSekolah(akun.sekolah_id ?? ""), kelasDiampu(akun.id)])
     const { baris } = await rekapSekolah(daftar, sekolah)
-    const kelasSaya = pref.length ? pref : Array.from(new Set(daftar.map((d) => d.kelas ?? "-")))
+    // hanya kelas yang ditugaskan di LMS (guru_mengajar, mapel ICT)
+    const kelasSaya = diampu.filter((k) => daftar.some((d) => (d.kelas ?? "").toUpperCase() === k))
 
     const perKelas = kelasSaya
       .map((k) => {
@@ -99,13 +99,17 @@ export default async function Beranda() {
 
         <section>
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-[#0f172a]">
-              {pref.length ? "Kelas yang Anda ampu" : "Semua kelas"}
-            </h2>
+            <h2 className="text-sm font-semibold text-[#0f172a]">Kelas yang Anda ampu di LMS</h2>
             <Link href="/nilai" className="text-[12px] font-medium text-[#0f766e] hover:underline">
-              Atur kelas saya
+              Buka rekap
             </Link>
           </div>
+          {perKelas.length === 0 && (
+            <div className="rounded-2xl border border-[#fde68a] bg-[#fffbeb] p-5 text-[13px] text-[#92400e]">
+              Anda belum ditugaskan mengajar ICT di LMS untuk tahun ajaran ini. Hubungi kurikulum bila
+              seharusnya ada kelas yang tampil.
+            </div>
+          )}
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {perKelas.map((k) => {
               const persen = k.total ? Math.round((k.terkumpul / k.total) * 100) : 0
