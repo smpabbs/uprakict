@@ -1,25 +1,18 @@
 "use client"
 
 import { useState } from "react"
-import { loginAction } from "@/lib/auth-actions"
 
 interface Sekolah {
   id: string
   nama: string
 }
 
-export default function LoginForm({ sekolah }: { sekolah: Sekolah[] }) {
+/**
+ * Form login tanpa ketergantungan JS untuk mengirim: memakai POST biasa ke
+ * /api/masuk. State hanya dipakai untuk tampilan (tab & pesan).
+ */
+export default function LoginForm({ sekolah, pesan }: { sekolah: Sekolah[]; pesan?: string }) {
   const [role, setRole] = useState<"siswa" | "guru">("siswa")
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
-
-  const handleSubmit = async (formData: FormData) => {
-    setLoading(true)
-    setError(null)
-    const result = await loginAction({}, formData)
-    setLoading(false)
-    if (result?.error) setError(result.error)
-  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted/50 px-4">
@@ -29,7 +22,7 @@ export default function LoginForm({ sekolah }: { sekolah: Sekolah[] }) {
           <p className="text-muted-foreground text-sm">Masuk dengan akun LMS sekolah</p>
         </div>
 
-        <form action={handleSubmit} className="space-y-4 bg-background p-6 rounded-xl border shadow-sm">
+        <form method="POST" action="/api/masuk" className="space-y-4 bg-background p-6 rounded-xl border shadow-sm">
           <input type="hidden" name="role" value={role} />
 
           <div className="grid grid-cols-2 gap-2 p-1 bg-muted rounded-lg">
@@ -37,7 +30,7 @@ export default function LoginForm({ sekolah }: { sekolah: Sekolah[] }) {
               <button
                 key={r}
                 type="button"
-                onClick={() => { setRole(r); setError(null) }}
+                onClick={() => setRole(r)}
                 className={
                   "py-2 rounded-md text-sm font-medium transition " +
                   (role === r ? "bg-background shadow-sm text-primary" : "text-muted-foreground")
@@ -53,6 +46,7 @@ export default function LoginForm({ sekolah }: { sekolah: Sekolah[] }) {
               <label className="block text-sm font-medium text-muted-foreground mb-1">Sekolah</label>
               <select
                 name="sekolah"
+                defaultValue={sekolah[0]?.id}
                 className="w-full px-3 py-2 border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 {sekolah.map((s) => (
@@ -89,16 +83,15 @@ export default function LoginForm({ sekolah }: { sekolah: Sekolah[] }) {
             />
           </div>
 
-          {error && (
-            <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">{error}</div>
+          {pesan && (
+            <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">{pesan}</div>
           )}
 
           <button
             type="submit"
-            disabled={loading}
-            className="w-full py-2 bg-primary text-primary-foreground rounded-md font-medium disabled:opacity-50"
+            className="w-full py-2 bg-primary text-primary-foreground rounded-md font-medium"
           >
-            {loading ? "Memeriksa…" : "Masuk"}
+            Masuk
           </button>
           <p className="text-xs text-muted-foreground text-center">
             Gunakan NIS (siswa) atau username (guru) beserta kata sandi akun LMS.

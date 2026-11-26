@@ -2,7 +2,6 @@ import Link from "next/link"
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { ambilAkun } from "@/lib/lms"
-import { logoutAction } from "@/lib/auth-actions"
 
 export const runtime = "edge"
 export const dynamic = "force-dynamic"
@@ -32,7 +31,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             <span className="hidden sm:inline text-sm text-muted-foreground">
               {akun?.nama ?? user.email}
             </span>
-            <form action={logoutAction}>
+            <form method="POST" action="/api/keluar">
               <button className="text-sm text-muted-foreground hover:text-destructive underline">Keluar</button>
             </form>
           </div>
