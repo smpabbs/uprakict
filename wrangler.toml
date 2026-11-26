@@ -1,9 +1,0 @@
-name = "uprakict"
-type = "pages"
-production_deploy = "main"
-build_command = "npm run build"
-build_directory = ".next"
-compatibility_date = "2026-11-26"
-
-[vars]
-NEXT_PUBLIC_SEKOLAH_NAMA = "SMP ABBS"

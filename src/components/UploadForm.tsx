@@ -1,90 +1,102 @@
-'use client'
+"use client"
 
-import { useState, useCallback } from 'react'
-import { supabase } from '@/lib/supabase'
-import { useAuth } from '@/lib/auth'
+import { useRef, useState } from "react"
+import { useRouter } from "next/navigation"
 
-interface Props {
-  tahunId: string
-}
-
-export function UploadForm({ tahunId }: Props) {
-  const { profile } = useAuth()
+export default function UploadForm({ maksMb, tutup }: { maksMb: number; tutup: string }) {
   const [file, setFile] = useState<File | null>(null)
-  const [uploading, setUploading] = useState(false)
-  const [err, setErr] = useState<string | null>(null)
-  const [ok, setOk] = useState(false)
+  const [progress, setProgress] = useState(0)
+  const [pesan, setPesan] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [kirim, setKirim] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const router = useRouter()
 
-  const handleSubmit = useCallback(async (formData: FormData) => {
-    if (!file) return
-    setUploading(true)
-    setErr(null)
-    setOk(false)
-
-    const uploadData = new FormData()
-    uploadData.append('tahunId', tahunId)
-    uploadData.append('file', file)
-
-    const res = await fetch('/api/upload', {
-      method: 'POST',
-      body: uploadData,
-    }).then((r) => r.json())
-
-    setUploading(false)
-    if (res.error) {
-      setErr(res.error)
+  const pilih = (f: File | null) => {
+    setError(null)
+    setPesan(null)
+    if (!f) return setFile(null)
+    if (f.size > maksMb * 1024 * 1024) {
+      setFile(null)
+      setError(`Berkas ${(f.size / 1048576).toFixed(1)} MB melebihi batas ${maksMb} MB.`)
       return
     }
-    setOk(true)
-  }, [file, tahunId])
+    setFile(f)
+  }
 
-  if (ok) {
-    return (
-      <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-green-800">
-        File berhasil terunggah dan tersimpan di Google Drive.
-      </div>
-    )
+  const unggah = () => {
+    if (!file) return
+    setKirim(true)
+    setError(null)
+    setPesan(null)
+    setProgress(0)
+
+    const fd = new FormData()
+    fd.append("berkas", file)
+    const xhr = new XMLHttpRequest()
+    xhr.open("POST", "/api/unggah")
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) setProgress(Math.round((e.loaded / e.total) * 100))
+    }
+    xhr.onload = () => {
+      setKirim(false)
+      let j: any = {}
+      try { j = JSON.parse(xhr.responseText) } catch { /* abaikan */ }
+      if (xhr.status >= 200 && xhr.status < 300 && j.ok) {
+        setPesan(`Berkas terkirim: ${j.nama}`)
+        setFile(null)
+        if (inputRef.current) inputRef.current.value = ""
+        router.refresh()
+      } else {
+        setError(j.error ?? `Gagal mengunggah (kode ${xhr.status}).`)
+      }
+    }
+    xhr.onerror = () => { setKirim(false); setError("Koneksi terputus saat mengunggah.") }
+    xhr.send(fd)
   }
 
   return (
-    <div className="rounded-xl border p-5">
-      <h2 className="text-lg font-semibold mb-4">Unggah File Ujian</h2>
-      <form action={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium mb-1">Pilih File</label>
-          <input
-            type="file"
-            onChange={(e) => {
-              const f = e.target.files?.[0] ?? null
-              setFile(f)
-              if (f && f.size > 50 * 1024 * 1024) {
-                setErr('File terlalu besar (maks 50 MB)')
-                setFile(null)
-              } else {
-                setErr(null)
-              }
-            }}
-            className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 cursor-pointer"
-            accept=".pdf,.doc,.docx,.zip,.rar,.jpg,.jpeg,.png"
-          />
-        </div>
-        {file && (
-          <div className="text-sm text-muted-foreground">
-            {file.name} · {(file.size / 1024 / 1024).toFixed(2)} MB
-          </div>
-        )}
-        {err && <div className="text-sm text-destructive">{err}</div>}
-        <button
-          type="submit"
-          disabled={uploading || !file}
-          className="w-full py-2 bg-primary text-primary-foreground rounded-md font-medium disabled:opacity-50"
-        >
-          {uploading ? 'Mengunggah…' : 'Kumpulkan File'}
-        </button>
+    <div className="space-y-4">
+      <div className="rounded-xl border border-dashed p-6 text-center space-y-3">
+        <input
+          ref={inputRef}
+          type="file"
+          onChange={(e) => pilih(e.target.files?.[0] ?? null)}
+          className="block w-full text-sm file:mr-3 file:px-3 file:py-2 file:rounded-md file:border-0 file:bg-primary file:text-primary-foreground"
+          accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip,.rar,.jpg,.jpeg,.png,.mp4,.txt"
+        />
         <p className="text-xs text-muted-foreground">
-          File akan disimpan di Google Drive sekolah. Maksimal 50 MB. Tipe yang diizinkan: PDF, DOC, DOCX, ZIP, RAR, JPG, PNG.
+          Maksimal {maksMb} MB. PDF, dokumen, gambar, arsip, atau video pendek.
+          {tutup ? ` Batas pengumpulan: ${tutup}.` : ""}
         </p>
-      </form>
+      </div>
+
+      {file && (
+        <p className="text-sm">
+          Dipilih: <strong className="break-all">{file.name}</strong> ({(file.size / 1048576).toFixed(2)} MB)
+        </p>
+      )}
+
+      {kirim && (
+        <div className="space-y-1">
+          <div className="h-2 bg-muted rounded overflow-hidden">
+            <div className="h-full bg-primary transition-all" style={{ width: `${progress}%` }} />
+          </div>
+          <p className="text-xs text-muted-foreground">Mengunggah… {progress}%</p>
+        </div>
+      )}
+
+      {pesan && <div className="text-sm bg-emerald-50 text-emerald-700 p-3 rounded-md">{pesan}</div>}
+      {error && <div className="text-sm bg-destructive/10 text-destructive p-3 rounded-md">{error}</div>}
+
+      <button
+        type="button"
+        onClick={unggah}
+        disabled={!file || kirim}
+        className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50"
+      >
+        {kirim ? "Mengunggah…" : "Unggah ke Google Drive"}
+      </button>
     </div>
   )
 }
