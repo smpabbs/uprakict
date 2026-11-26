@@ -1,0 +1,5 @@
+[auth]
+enable_signup = false
+enable_anonymous_sign_ins = false
+minimum_password_length = 8
+email_confirmation = false
