@@ -3,6 +3,7 @@ import Link from "next/link"
 import { createClient } from "@/lib/supabase/server"
 import { ambilAkun, siswaSekolah, penugasanGuru, siswaCocok, type Akun, type Penugasan } from "@/lib/lms"
 import { infoUjian, namaSekolah, rekapSekolah } from "@/lib/ujian"
+import { bacaSoal, kunciSoal, tingkatKelas } from "@/lib/soal"
 
 export const runtime = "edge"
 export const dynamic = "force-dynamic"
@@ -32,6 +33,7 @@ export default async function NilaiPage({
   ])
   const { baris } = await rekapSekolah(daftar, sekolah)
   const perNis = new Map(baris.map((b) => [b.nis, b]))
+  const petaSoal = await bacaSoal()
 
   // hanya penugasan yang punya siswa
   const tugas = penugasan
@@ -107,6 +109,21 @@ export default async function NilaiPage({
               )
             })}
           </div>
+
+          {aktif && (() => {
+            const t = tingkatKelas(aktif.p.kelas)
+            const s = t ? petaSoal[kunciSoal(t, aktif.p.target)] : undefined
+            return (
+              <details className="border-b border-[#e2e8f0] bg-[#fbfdff] px-5 py-3">
+                <summary className="cursor-pointer text-[12px] font-semibold text-[#0f172a]">
+                  Soal / instruksi {aktif.p.label} {s?.judul ? `— ${s.judul}` : "(belum diisi)"}
+                </summary>
+                <pre className="mt-2 whitespace-pre-wrap break-words rounded-xl bg-white p-3 font-sans text-[12.5px] leading-relaxed text-[#334155]">
+                  {s?.isi || "Belum ada instruksi untuk jenjang/progul ini. Isi di menu Soal."}
+                </pre>
+              </details>
+            )
+          })()}
 
           <div className="overflow-x-auto">
             <table className="w-full text-[13px]">

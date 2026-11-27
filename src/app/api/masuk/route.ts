@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { cookies } from "next/headers"
 import { createServerClient, type CookieOptions } from "@supabase/ssr"
 import { anon } from "@/lib/supabase/anon"
-import { ambilAkun } from "@/lib/lms"
+import { ambilAkun, cariStaff } from "@/lib/lms"
 import { LMS_URL, LMS_ANON, SEKOLAH_DEFAULT } from "@/lib/env"
 
 export const runtime = "edge"
@@ -23,12 +23,19 @@ export async function POST(request: Request) {
 
   let email: string | null = null
   try {
-    const { data, error } =
-      role === "guru"
-        ? await anon.rpc("get_email_by_username", { p_username: identifier })
-        : await anon.rpc("get_email_by_nis", { p_nis: identifier, p_sekolah_id: sekolah })
-    if (error) return balik("Tidak dapat memeriksa akun: " + error.message)
-    email = (data as string | null) ?? null
+    if (role === "guru") {
+      // guru lewat RPC LMS; admin/auditor lewat pencarian staf (read-only)
+      const { data } = await anon.rpc("get_email_by_username", { p_username: identifier })
+      email = (data as string | null) ?? null
+      if (!email) {
+        const staf = await cariStaff(identifier)
+        email = staf?.email ?? null
+      }
+    } else {
+      const { data, error } = await anon.rpc("get_email_by_nis", { p_nis: identifier, p_sekolah_id: sekolah })
+      if (error) return balik("Tidak dapat memeriksa NIS: " + error.message)
+      email = (data as string | null) ?? null
+    }
   } catch (e) {
     return balik("Gagal menghubungi LMS: " + (e as Error).message)
   }
@@ -62,9 +69,11 @@ export async function POST(request: Request) {
   // peran harus cocok dengan tab yang dipilih
   try {
     const akun = await ambilAkun(data.user.id)
-    if (akun && akun.role !== role) {
+    const staf = ["guru", "admin", "admin_keuangan", "auditor"]
+    const cocok = role === "guru" ? akun && staf.includes(akun.role) : akun?.role === "siswa"
+    if (akun && !cocok) {
       await supabase.auth.signOut()
-      return balik(`Akun ini terdaftar sebagai ${akun.role}, bukan ${role}.`)
+      return balik(`Akun ini terdaftar sebagai ${akun.role}.`)
     }
   } catch {
     // profil tidak terbaca — login tetap lanjut

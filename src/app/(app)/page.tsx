@@ -3,6 +3,7 @@ import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { ambilAkun, siswaSekolah, penugasanGuru, siswaCocok } from "@/lib/lms"
 import { infoUjian, namaSekolah, berkasSiswa, rekapSekolah } from "@/lib/ujian"
+import { bacaSoal, kunciSoal, targetProgul, tingkatKelas } from "@/lib/soal"
 
 export const runtime = "edge"
 export const dynamic = "force-dynamic"
@@ -30,6 +31,9 @@ export default async function Beranda() {
       </div>
     )
   }
+
+  // admin/auditor diarahkan ke pengaturan soal
+  if (!["siswa", "guru"].includes(akun.role)) redirect("/soal")
 
   const [ujian, sekolah] = await Promise.all([infoUjian(), namaSekolah(akun.sekolah_id)])
 
@@ -141,6 +145,14 @@ export default async function Beranda() {
   // ---------- siswa ----------
   const berkas = await berkasSiswa(akun, sekolah)
   const terbaru = berkas[0]
+  const tingkat = tingkatKelas(akun.kelas)
+  const target = targetProgul(akun.progul)
+  let soalSiswa: { judul: string; isi: string } | null = null
+  if (tingkat) {
+    const peta = await bacaSoal()
+    const s = peta[kunciSoal(tingkat, target)]
+    if (s && (s.judul || s.isi)) soalSiswa = { judul: s.judul, isi: s.isi }
+  }
 
   return (
     <div className="space-y-5">
@@ -209,6 +221,24 @@ export default async function Beranda() {
               </div>
             </div>
           </div>
+        )}
+      </section>
+
+      <section className="rounded-2xl border border-[#e2e8f0] bg-white p-5 sm:p-6">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-[#0f766e]">
+          Soal &amp; instruksi {tingkat ? `kelas ${tingkat}` : ""} {target === "ICT" ? "· progul ICT" : "· non-ICT"}
+        </p>
+        {soalSiswa ? (
+          <>
+            <h2 className="mt-1 text-base font-semibold text-[#0f172a]">{soalSiswa.judul}</h2>
+            <pre className="mt-3 whitespace-pre-wrap break-words rounded-xl bg-[#f8fafc] p-4 font-sans text-[13px] leading-relaxed text-[#334155]">
+              {soalSiswa.isi}
+            </pre>
+          </>
+        ) : (
+          <p className="mt-2 text-[13px] text-[#64748b]">
+            Instruksi untuk jenjang dan progul Anda belum diisi guru/admin. Silakan cek kembali nanti.
+          </p>
         )}
       </section>
     </div>

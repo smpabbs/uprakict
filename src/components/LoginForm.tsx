@@ -36,7 +36,7 @@ export default function LoginForm({ sekolah, pesan }: { sekolah: Sekolah[]; pesa
                   (role === r ? "bg-background shadow-sm text-primary" : "text-muted-foreground")
                 }
               >
-                {r === "siswa" ? "Siswa" : "Guru"}
+                {r === "siswa" ? "Siswa" : "Guru / Admin"}
               </button>
             ))}
           </div>
@@ -58,7 +58,7 @@ export default function LoginForm({ sekolah, pesan }: { sekolah: Sekolah[]; pesa
 
           <div>
             <label className="block text-sm font-medium text-muted-foreground mb-1">
-              {role === "siswa" ? "NIS" : "Username Guru"}
+              {role === "siswa" ? "NIS" : "Username (guru/admin)"}
             </label>
             <input
               name="identifier"
@@ -94,7 +94,7 @@ export default function LoginForm({ sekolah, pesan }: { sekolah: Sekolah[]; pesa
             Masuk
           </button>
           <p className="text-xs text-muted-foreground text-center">
-            Gunakan NIS (siswa) atau username (guru) beserta kata sandi akun LMS.
+            Gunakan NIS (siswa) atau username (guru/admin) beserta kata sandi akun LMS.
           </p>
         </form>
       </div>

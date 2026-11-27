@@ -51,19 +51,28 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             >
               Beranda
             </Link>
-            {guru ? (
+            {guru && (
               <Link
                 href="/nilai"
                 className="rounded-lg px-3 py-1.5 font-medium text-[#475569] transition hover:bg-[#f1f5f9] hover:text-[#0f172a]"
               >
                 Rekap &amp; Nilai
               </Link>
-            ) : (
+            )}
+            {!guru && akun?.role === "siswa" && (
               <Link
                 href="/unggah"
                 className="rounded-lg px-3 py-1.5 font-medium text-[#475569] transition hover:bg-[#f1f5f9] hover:text-[#0f172a]"
               >
                 Kumpulkan
+              </Link>
+            )}
+            {(akun?.role === "admin" || guru) && (
+              <Link
+                href="/soal"
+                className="rounded-lg px-3 py-1.5 font-medium text-[#475569] transition hover:bg-[#f1f5f9] hover:text-[#0f172a]"
+              >
+                Soal
               </Link>
             )}
           </nav>

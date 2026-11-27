@@ -64,6 +64,18 @@ export async function cariGuru(identifier: string): Promise<Akun | null> {
   return akun
 }
 
+/** Login staf (guru/admin/auditor) memakai username atau NIS. */
+export async function cariStaff(identifier: string): Promise<Akun | null> {
+  const { data, error } = await admin()
+    .from("profiles")
+    .select("id,nis,username,nama,role,kelas,progul,sekolah_id,email")
+    .in("role", ["guru", "admin", "admin_keuangan", "auditor"])
+    .or(`username.ilike.${identifier},nis.eq.${identifier}`)
+    .limit(1)
+  if (error) throw new Error("Gagal memeriksa akun staf: " + error.message)
+  return ((data ?? [])[0] ?? null) as Akun | null
+}
+
 export async function ambilAkun(id: string): Promise<Akun | null> {
   const { data } = await admin()
     .from("profiles")
