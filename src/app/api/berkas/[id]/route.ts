@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
-import { ambilAkun, kelasDiampu, siswaSekolah } from "@/lib/lms"
+import { ambilAkun, bolehSiswa, siswaSekolah } from "@/lib/lms"
 import { infoBerkas, unduhBerkas } from "@/lib/drive"
 import { daftarBerkas } from "@/lib/drive"
 import { namaSekolah, folderSekolah } from "@/lib/ujian"
@@ -45,14 +45,10 @@ export async function GET(
       return new NextResponse("Tidak berhak", { status: 403 })
     }
   } else {
-    // guru hanya boleh membuka berkas siswa di kelas yang ditugaskan di LMS
-    const [diampu, siswa] = await Promise.all([
-      kelasDiampu(akun.id),
-      siswaSekolah(akun.sekolah_id ?? ""),
-    ])
+    // guru hanya boleh membuka berkas siswa di kelas + progul yang ditugaskan
+    const siswa = await siswaSekolah(akun.sekolah_id ?? "")
     const murid = siswa.find((x) => (x.nis ?? "") === nisBerkas)
-    const kelasMurid = (murid?.kelas ?? "").toUpperCase()
-    if (!murid || !diampu.includes(kelasMurid)) {
+    if (!murid || !(await bolehSiswa(akun.id, murid))) {
       return new NextResponse("Tidak berhak", { status: 403 })
     }
   }

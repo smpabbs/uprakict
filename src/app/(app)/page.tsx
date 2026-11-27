@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import { ambilAkun, siswaSekolah, kelasDiampu } from "@/lib/lms"
+import { ambilAkun, siswaSekolah, penugasanGuru, siswaCocok } from "@/lib/lms"
 import { infoUjian, namaSekolah, berkasSiswa, rekapSekolah } from "@/lib/ujian"
 
 export const runtime = "edge"
@@ -34,29 +34,29 @@ export default async function Beranda() {
   const [ujian, sekolah] = await Promise.all([infoUjian(), namaSekolah(akun.sekolah_id)])
 
   if (akun.role === "guru") {
-    const [daftar, diampu] = await Promise.all([siswaSekolah(akun.sekolah_id ?? ""), kelasDiampu(akun.id)])
+    const [daftar, penugasan] = await Promise.all([siswaSekolah(akun.sekolah_id ?? ""), penugasanGuru(akun.id)])
     const { baris } = await rekapSekolah(daftar, sekolah)
-    // hanya kelas yang ditugaskan di LMS (guru_mengajar, mapel ICT)
-    const kelasSaya = diampu.filter((k) => daftar.some((d) => (d.kelas ?? "").toUpperCase() === k))
+    const perNis = new Map(baris.map((b) => [b.nis, b]))
 
-    const perKelas = kelasSaya
-      .map((k) => {
-        const isi = baris.filter((b) => b.kelas === k)
+    // satu kartu per penugasan LMS (kelas + progul), hanya yang ada siswanya
+    const perKelas = penugasan
+      .map((p) => {
+        const isi = daftar.filter((d) => siswaCocok(d, p)).map((d) => perNis.get(d.nis ?? "")).filter(Boolean)
+        const dinilaiArr = isi.filter((b) => b!.nilai !== "")
         return {
-          kelas: k,
+          kunci: p.kelas + p.target,
+          label: p.label,
           total: isi.length,
-          terkumpul: isi.filter((b) => b.berkas).length,
-          dinilai: isi.filter((b) => b.nilai !== "").length,
+          terkumpul: isi.filter((b) => b!.berkas).length,
+          dinilai: dinilaiArr.length,
           rata:
-            isi.filter((b) => b.nilai !== "").length > 0
-              ? Math.round(
-                  isi.filter((b) => b.nilai !== "").reduce((a, b) => a + Number(b.nilai), 0) /
-                    isi.filter((b) => b.nilai !== "").length
-                )
+            dinilaiArr.length > 0
+              ? Math.round(dinilaiArr.reduce((a, b) => a + Number(b!.nilai), 0) / dinilaiArr.length)
               : null,
         }
       })
-      .sort((a, b) => a.kelas.localeCompare(b.kelas))
+      .filter((k) => k.total > 0)
+      .sort((a, b) => a.label.localeCompare(b.label))
 
     const total = perKelas.reduce((a, k) => a + k.total, 0)
     const terkumpul = perKelas.reduce((a, k) => a + k.terkumpul, 0)
@@ -115,12 +115,12 @@ export default async function Beranda() {
               const persen = k.total ? Math.round((k.terkumpul / k.total) * 100) : 0
               return (
                 <Link
-                  key={k.kelas}
-                  href={`/nilai?kelas=${encodeURIComponent(k.kelas)}`}
+                  key={k.kunci}
+                  href={`/nilai?k=${encodeURIComponent(k.kunci)}`}
                   className="group rounded-2xl border border-[#e2e8f0] bg-white p-4 transition hover:border-[#99f6e4] hover:shadow-sm"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-base font-semibold text-[#0f172a]">Kelas {k.kelas}</span>
+                    <span className="text-base font-semibold text-[#0f172a]">{k.label}</span>
                     {k.rata !== null ? <Chip tone="ok">rata {k.rata}</Chip> : <Chip>belum dinilai</Chip>}
                   </div>
                   <p className="mt-1 text-[12px] text-[#64748b]">

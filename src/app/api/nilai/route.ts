@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
-import { ambilAkun, bolehKelas } from "@/lib/lms"
+import { ambilAkun, bolehSiswa, siswaSekolah } from "@/lib/lms"
 import { namaSekolah, simpanNilaiSiswa } from "@/lib/ujian"
 
 export const runtime = "edge"
@@ -40,8 +40,11 @@ export async function POST(request: Request) {
   }
 
   try {
-    if (!(await bolehKelas(guru.id, kelas))) {
-      asal.searchParams.set("e", `Anda tidak ditugaskan mengajar ICT di kelas ${kelas || "-"}.`)
+    // hak akses: siswa harus berada di kelas + progul yang ditugaskan ke guru ini
+    const semua = await siswaSekolah(guru.sekolah_id ?? "")
+    const murid = semua.find((x) => (x.nis ?? "") === nis)
+    if (!murid || !(await bolehSiswa(guru.id, murid))) {
+      asal.searchParams.set("e", `NIS ${nis} bukan siswa kelas/progul yang Anda ampu.`)
       return NextResponse.redirect(asal, 303)
     }
     const sekolah = await namaSekolah(guru.sekolah_id)

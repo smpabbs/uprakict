@@ -10,6 +10,7 @@ export interface Akun {
   nama: string
   role: string
   kelas: string | null
+  progul?: string | null
   sekolah_id: string | null
   email: string
 }
@@ -40,7 +41,7 @@ export async function daftarSekolah(): Promise<Sekolah[]> {
 export async function cariSiswa(nis: string, sekolahId: string): Promise<Akun | null> {
   const { data, error } = await admin()
     .from("profiles")
-    .select("id,nis,username,nama,role,kelas,sekolah_id,email")
+    .select("id,nis,username,nama,role,kelas,progul,sekolah_id,email")
     .eq("nis", nis)
     .eq("sekolah_id", sekolahId)
     .eq("role", "siswa")
@@ -54,7 +55,7 @@ export async function cariSiswa(nis: string, sekolahId: string): Promise<Akun | 
 export async function cariGuru(identifier: string): Promise<Akun | null> {
   const { data, error } = await admin()
     .from("profiles")
-    .select("id,nis,username,nama,role,kelas,sekolah_id,email")
+    .select("id,nis,username,nama,role,kelas,progul,sekolah_id,email")
     .eq("role", "guru")
     .or(`username.ilike.${identifier},nis.eq.${identifier}`)
     .limit(1)
@@ -66,7 +67,7 @@ export async function cariGuru(identifier: string): Promise<Akun | null> {
 export async function ambilAkun(id: string): Promise<Akun | null> {
   const { data } = await admin()
     .from("profiles")
-    .select("id,nis,username,nama,role,kelas,sekolah_id,email")
+    .select("id,nis,username,nama,role,kelas,progul,sekolah_id,email")
     .eq("id", id)
     .maybeSingle()
   return (data as Akun) ?? null
@@ -76,7 +77,7 @@ export async function ambilAkun(id: string): Promise<Akun | null> {
 export async function siswaSekolah(sekolahId: string): Promise<Akun[]> {
   const { data, error } = await admin()
     .from("profiles")
-    .select("id,nis,username,nama,role,kelas,sekolah_id,email")
+    .select("id,nis,username,nama,role,kelas,progul,sekolah_id,email")
     .eq("sekolah_id", sekolahId)
     .eq("role", "siswa")
     .not("nis", "is", null)
@@ -86,33 +87,78 @@ export async function siswaSekolah(sekolahId: string): Promise<Akun[]> {
   return (data ?? []) as Akun[]
 }
 
-/** Nama mapel yang dianggap sebagai ujian praktik ICT. */
-const POLA_MAPEL_ICT = /ICT/i
+/* ---------------- penugasan mengajar (kelas + progul) ---------------- */
+
+export type TargetProgul = "ICT" | "NONICT"
+
+export interface Penugasan {
+  kelas: string // "7C"
+  mapel: string // "ICT Progul" / "ICT Non Progul"
+  target: TargetProgul
+  label: string // "7C · ICT"
+}
+
+const RE_KELAS = /^(\d{1,2})\s*[- ]?\s*([A-H])\b/i
+
+/** "7C" / "7 c" / "8A IBN FIRNAS" → "8A"; selain pola itu → null. */
+export function normalKelas(nilai: string | null | undefined): string | null {
+  const t = String(nilai ?? "").trim()
+  const m = t.match(RE_KELAS)
+  if (m) return (m[1] + m[2]).toUpperCase()
+  const rapat = t.toUpperCase().replace(/\s+/g, "")
+  return /^\d{1,2}[A-H]$/.test(rapat) ? rapat : null
+}
 
 /**
- * Kelas yang benar-benar ditugaskan ke guru di LMS (`guru_mengajar`),
- * dibatasi hanya pada mata pelajaran ICT. Inilah satu-satunya sumber hak akses kelas.
+ * Penugasan mengajar ICT seorang guru menurut LMS (`guru_mengajar`).
+ * Progul menentukan subset siswa:
+ *  - "ICT Progul"     → siswa dengan progul = ICT
+ *  - "ICT Non Progul" → siswa dengan progul selain ICT (TCP/VCP)
  */
-export async function kelasDiampu(guruId: string): Promise<string[]> {
+export async function penugasanGuru(guruId: string): Promise<Penugasan[]> {
   const db = admin()
   const [{ data: mapel }, { data: ajar }] = await Promise.all([
     db.from("mata_pelajaran").select("id,nama"),
     db.from("guru_mengajar").select("kelas,mapel_id").eq("guru_id", guruId),
   ])
-  const idIct = new Set(
-    (mapel ?? []).filter((m: { nama: string }) => POLA_MAPEL_ICT.test(m.nama ?? "")).map((m: { id: string }) => m.id)
-  )
-  const kelas = new Set<string>()
-  for (const row of (ajar ?? []) as { kelas: string | null; mapel_id: string }[]) {
-    if (!row.kelas) continue
-    if (!idIct.has(row.mapel_id)) continue
-    kelas.add(String(row.kelas).trim().toUpperCase())
+  const ict = new Map<string, string>()
+  for (const m of (mapel ?? []) as { id: string; nama: string }[]) {
+    if (/ICT/i.test(m.nama ?? "")) ict.set(m.id, m.nama)
   }
-  return Array.from(kelas).sort()
+  const hasil = new Map<string, Penugasan>()
+  for (const row of (ajar ?? []) as { kelas: string | null; mapel_id: string }[]) {
+    const nama = ict.get(row.mapel_id)
+    if (!nama) continue
+    const kelas = normalKelas(row.kelas)
+    if (!kelas) continue
+    const target: TargetProgul = /non/i.test(nama) ? "NONICT" : "ICT"
+    hasil.set(kelas + target, {
+      kelas,
+      mapel: nama,
+      target,
+      label: `${kelas} · ${target === "ICT" ? "ICT" : "Non-ICT"}`,
+    })
+  }
+  return Array.from(hasil.values()).sort(
+    (a, b) => a.kelas.localeCompare(b.kelas) || a.target.localeCompare(b.target)
+  )
 }
 
-/** Apakah guru ditugaskan mengajar ICT di kelas tertentu. */
-export async function bolehKelas(guruId: string, kelas: string): Promise<boolean> {
-  const daftar = await kelasDiampu(guruId)
-  return daftar.includes(String(kelas).trim().toUpperCase())
+/** Apakah siswa termasuk dalam penugasan guru (kelas sama + progul sesuai). */
+export function siswaCocok(
+  siswa: { kelas: string | null; progul?: string | null },
+  p: Penugasan
+): boolean {
+  if ((siswa.kelas ?? "").toUpperCase() !== p.kelas) return false
+  const progul = (siswa.progul ?? "").toUpperCase()
+  return p.target === "ICT" ? progul === "ICT" : progul !== "ICT"
+}
+
+/** Cek hak guru atas satu siswa (dipakai API berkas & nilai). */
+export async function bolehSiswa(
+  guruId: string,
+  siswa: { kelas: string | null; progul?: string | null }
+): Promise<boolean> {
+  const daftar = await penugasanGuru(guruId)
+  return daftar.some((p) => siswaCocok(siswa, p))
 }
