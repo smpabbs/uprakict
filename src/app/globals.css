@@ -3,13 +3,13 @@
 @tailwind utilities;
 
 :root {
-  --brand: #0f766e;
+  --brand: #0f6b63;
   --brand-dark: #115e59;
   --ink: #0f172a;
   --muted: #64748b;
-  --line: #e2e8f0;
-  --surface: #ffffff;
-  --bg: #f6f8fb;
+  --line: #cbd5e1;
+  --surface: #f5f8fb;
+  --bg: #e7ecf2;
 }
 
 html {
@@ -34,7 +34,7 @@ textarea {
 }
 
 ::selection {
-  background: #99f6e4;
+  background: #7ddcc9;
   color: #134e4a;
 }
 

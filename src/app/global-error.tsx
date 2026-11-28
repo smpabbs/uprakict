@@ -15,7 +15,7 @@ export default function GlobalError({
         <pre
           style={{
             fontSize: 12,
-            background: "#f4f4f5",
+            background: "#e6ecf3",
             padding: 12,
             borderRadius: 8,
             whiteSpace: "pre-wrap",

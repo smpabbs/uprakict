@@ -31,8 +31,8 @@ export default function Umumkan() {
       className={
         "fixed inset-x-3 top-3 z-50 mx-auto max-w-xl rounded-xl border px-4 py-3 text-[13px] font-medium shadow-lg " +
         (pesan.galat
-          ? "border-[#fecaca] bg-[#fef2f2] text-[#b91c1c]"
-          : "border-[#bbf7d0] bg-[#f0fdf4] text-[#15803d]")
+          ? "border-[#f2b8b8] bg-[#fdeaea] text-[#b91c1c]"
+          : "border-[#a7e8bc] bg-[#e7f6ed] text-[#166534]")
       }
     >
       <div className="flex items-start justify-between gap-3">
