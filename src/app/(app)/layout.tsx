@@ -1,4 +1,5 @@
 import Link from "next/link"
+import Umumkan from "@/components/Umumkan"
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { ambilAkun } from "@/lib/lms"
@@ -7,12 +8,21 @@ import { infoUjian } from "@/lib/ujian"
 export const runtime = "edge"
 export const dynamic = "force-dynamic"
 
+const tabCls = (aktif: boolean) =>
+  "rounded-lg px-3 py-1.5 text-[13px] font-semibold transition " +
+  (aktif
+    ? "bg-[#115e59] text-white shadow-sm"
+    : "text-[#334155] hover:bg-[#f1f5f9] hover:text-[#0f172a]")
+
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) redirect("/login")
+
+  const { headers } = await import("next/headers")
+  const path = (await headers()).get("x-pathname") ?? ""
 
   const akun = await ambilAkun(user.id)
   const guru = akun?.role === "guru"
@@ -35,43 +45,31 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <header className="sticky top-0 z-30 border-b border-[#e2e8f0] bg-white/85 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 sm:px-6">
           <Link href="/" className="flex items-center gap-2.5">
-            <span className="grid h-9 w-9 place-items-center rounded-xl bg-[#0f766e] text-sm font-bold text-white shadow-sm">
+            <span className="grid h-9 w-9 place-items-center rounded-xl bg-[#115e59] text-sm font-bold text-white shadow-sm">
               ICT
             </span>
             <span className="hidden sm:block leading-tight">
               <span className="block text-[13px] font-semibold text-[#0f172a]">Ujian Praktik ICT</span>
-              <span className="block text-[11px] text-[#64748b]">{ujianNama || "SMP ABBS Surakarta"}</span>
+              <span className="block text-[11px] text-[#556172]">{ujianNama || "SMP ABBS Surakarta"}</span>
             </span>
           </Link>
 
-          <nav className="ml-2 flex items-center gap-1 text-[13px]">
-            <Link
-              href="/"
-              className="rounded-lg px-3 py-1.5 font-medium text-[#475569] transition hover:bg-[#f1f5f9] hover:text-[#0f172a]"
-            >
+          <nav className="ml-2 flex items-center gap-1">
+            <Link href="/" className={tabCls(path === "/")}>
               Beranda
             </Link>
             {guru && (
-              <Link
-                href="/nilai"
-                className="rounded-lg px-3 py-1.5 font-medium text-[#475569] transition hover:bg-[#f1f5f9] hover:text-[#0f172a]"
-              >
+              <Link href="/nilai" className={tabCls(path.startsWith("/nilai"))}>
                 Rekap &amp; Nilai
               </Link>
             )}
             {!guru && akun?.role === "siswa" && (
-              <Link
-                href="/unggah"
-                className="rounded-lg px-3 py-1.5 font-medium text-[#475569] transition hover:bg-[#f1f5f9] hover:text-[#0f172a]"
-              >
+              <Link href="/unggah" className={tabCls(path.startsWith("/unggah"))}>
                 Kumpulkan
               </Link>
             )}
             {(akun?.role === "admin" || guru) && (
-              <Link
-                href="/soal"
-                className="rounded-lg px-3 py-1.5 font-medium text-[#475569] transition hover:bg-[#f1f5f9] hover:text-[#0f172a]"
-              >
+              <Link href="/soal" className={tabCls(path.startsWith("/soal"))}>
                 Soal
               </Link>
             )}
@@ -87,7 +85,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
               </span>
             </div>
             <form method="POST" action="/api/keluar">
-              <button className="rounded-lg border border-[#e2e8f0] px-3 py-1.5 text-[12px] font-medium text-[#64748b] transition hover:border-[#fecaca] hover:bg-[#fef2f2] hover:text-[#b91c1c]">
+              <button className="rounded-lg border border-[#cbd5e1] px-3 py-1.5 text-[12px] font-semibold text-[#334155] transition hover:border-[#fecaca] hover:bg-[#fef2f2] hover:text-[#b91c1c]">
                 Keluar
               </button>
             </form>
@@ -95,9 +93,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-8">{children}</main>
+      <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
+        <Umumkan />
+        {children}
+      </main>
 
-      <footer className="mx-auto max-w-6xl px-4 pb-8 text-[11px] text-[#94a3b8] sm:px-6">
+      <footer className="mx-auto max-w-6xl px-4 pb-8 text-[11px] text-[#5f6b7a] sm:px-6">
         SMP ABBS Surakarta · Program ICT — berkas ujian tersimpan aman di server sekolah.
       </footer>
     </div>

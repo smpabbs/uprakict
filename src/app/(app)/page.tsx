@@ -80,14 +80,14 @@ export default async function Beranda() {
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-wider text-[#0f766e]">Ruang guru</p>
               <h1 className="mt-1 text-xl font-semibold text-[#0f172a] sm:text-2xl">{ujian.nama}</h1>
-              <p className="mt-1 text-sm text-[#64748b]">
+              <p className="mt-1 text-sm text-[#556172]">
                 {sekolah} · {ujian.tahunAjaran} semester {ujian.semester}
                 {ujian.tutup ? ` · batas ${labelBatas()}` : " · pengumpulan masih dibuka"}
               </p>
             </div>
             <Link
               href="/nilai"
-              className="rounded-xl bg-[#0f766e] px-4 py-2 text-[13px] font-semibold text-white shadow-sm transition hover:bg-[#115e59]"
+              className="rounded-xl bg-[#115e59] px-4 py-2 text-[13px] font-semibold text-white shadow-sm transition hover:bg-[#0c4a44]"
             >
               Mulai menilai
             </Link>
@@ -101,7 +101,7 @@ export default async function Beranda() {
               { label: "Sudah dinilai", nilai: dinilai },
             ].map((s) => (
               <div key={s.label} className="rounded-xl border border-[#e2e8f0] bg-[#fbfdff] p-4">
-                <p className="text-[11px] font-medium uppercase tracking-wide text-[#94a3b8]">{s.label}</p>
+                <p className="text-[11px] font-medium uppercase tracking-wide text-[#5f6b7a]">{s.label}</p>
                 <p className="mt-1 text-2xl font-semibold text-[#0f172a]">{s.nilai}</p>
               </div>
             ))}
@@ -134,11 +134,11 @@ export default async function Beranda() {
                     <span className="text-base font-semibold text-[#0f172a]">{k.label}</span>
                     {k.rata !== null ? <Chip tone="ok">rata {k.rata}</Chip> : <Chip>belum dinilai</Chip>}
                   </div>
-                  <p className="mt-1 text-[12px] text-[#64748b]">
+                  <p className="mt-1 text-[12px] text-[#556172]">
                     {k.terkumpul}/{k.total} berkas terkumpul · {k.dinilai} dinilai
                   </p>
                   <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#eef2f6]">
-                    <div className="h-full rounded-full bg-[#0f766e]" style={{ width: `${persen}%` }} />
+                    <div className="h-full rounded-full bg-[#115e59]" style={{ width: `${persen}%` }} />
                   </div>
                 </Link>
               )
@@ -187,7 +187,7 @@ export default async function Beranda() {
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-wider text-[#0f766e]">Ujian praktik</p>
               <h1 className="mt-1 text-xl font-semibold text-[#0f172a] sm:text-2xl">{ujian.nama}</h1>
-              <p className="mt-1 text-sm text-[#64748b]">
+              <p className="mt-1 text-sm text-[#556172]">
                 {akun.nama} · NIS {akun.nis ?? "-"} · {sekolah}
                 {akun.kelas ? ` · Kelas ${akun.kelas}` : ""}
               </p>
@@ -205,23 +205,23 @@ export default async function Beranda() {
         <div className="grid gap-4 p-5 sm:grid-cols-3 sm:p-6">
           <div className="sm:col-span-2">
             <p className="text-sm text-[#334155]">{ujian.deskripsi || "Kumpulkan berkas tugas praktik ICT Anda."}</p>
-            <ul className="mt-3 space-y-1.5 text-[13px] text-[#64748b]">
+            <ul className="mt-3 space-y-1.5 text-[13px] text-[#556172]">
               <li>• Satu berkas per siswa (PDF, dokumen, gambar, atau arsip).</li>
               <li>• Mengunggah ulang akan mengganti berkas sebelumnya.</li>
               <li>• Berkas hanya bisa dilihat lewat halaman ini, bukan tautan luar.</li>
             </ul>
           </div>
           <div className="rounded-xl border border-[#e2e8f0] bg-[#fbfdff] p-4">
-            <p className="text-[11px] font-medium uppercase tracking-wide text-[#94a3b8]">Batas waktu</p>
+            <p className="text-[11px] font-medium uppercase tracking-wide text-[#5f6b7a]">Batas waktu</p>
             <p className="mt-1 text-sm font-semibold text-[#0f172a]">{labelBatas()}</p>
             {mundur && !mundur.pakaiJadwal && (
-              <p className="mt-1 text-[11px] leading-relaxed text-[#64748b]">
+              <p className="mt-1 text-[11px] leading-relaxed text-[#556172]">
                 Pengumpulan tetap terbuka. Waktu acuan hanya untuk menandai siswa yang terlambat.
               </p>
             )}
             <Link
               href="/unggah"
-              className="mt-3 block rounded-xl bg-[#0f766e] px-4 py-2 text-center text-[13px] font-semibold text-white transition hover:bg-[#115e59]"
+              className="mt-3 block rounded-xl bg-[#115e59] px-4 py-2 text-center text-[13px] font-semibold text-white transition hover:bg-[#0c4a44]"
             >
               {terbaru ? "Ganti berkas" : "Kumpulkan sekarang"}
             </Link>
@@ -230,11 +230,11 @@ export default async function Beranda() {
 
         {terbaru && (
           <div className="border-t border-[#e2e8f0] p-5 sm:p-6">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-[#94a3b8]">Berkas terkirim</p>
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-[#5f6b7a]">Berkas terkirim</p>
             <div className="mt-2 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#e2e8f0] bg-[#fbfdff] p-3">
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium text-[#0f172a]">{terbaru.name}</p>
-                <p className="text-[12px] text-[#64748b]">
+                <p className="text-[12px] text-[#556172]">
                   {new Date(terbaru.createdTime).toLocaleString("id-ID")}
                   {terbaru.size ? ` · ${(Number(terbaru.size) / 1048576).toFixed(2)} MB` : ""}
                   {terlambat(terbaru.createdTime) ? " · terlambat" : ""}
@@ -299,7 +299,7 @@ export default async function Beranda() {
             {soalSiswa.lampiran && (
               <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#e2e8f0] bg-[#fbfdff] p-3">
                 <div className="min-w-0">
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-[#94a3b8]">Lampiran</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-[#5f6b7a]">Lampiran</p>
                   <p className="truncate text-[13px] font-medium text-[#334155]">{soalSiswa.lampiran.name}</p>
                 </div>
                 <a
@@ -312,7 +312,7 @@ export default async function Beranda() {
             )}
           </>
         ) : (
-          <p className="mt-2 text-[13px] text-[#64748b]">
+          <p className="mt-2 text-[13px] text-[#556172]">
             Instruksi untuk jenjang dan progul Anda belum diisi guru/admin. Silakan cek kembali nanti.
           </p>
         )}

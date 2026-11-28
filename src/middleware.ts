@@ -9,7 +9,9 @@ import { NextResponse, type NextRequest } from 'next/server'
  * itu penyebab error "An unexpected response was received from the server".
  */
 export async function middleware(request: NextRequest) {
-  const response = NextResponse.next({ request })
+  const headers = new Headers(request.headers)
+  headers.set('x-pathname', request.nextUrl.pathname)
+  const response = NextResponse.next({ request: { headers } })
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

@@ -18,7 +18,7 @@ let cache: { token: string; exp: number } | null = null
 async function token(): Promise<string> {
   if (cache && Date.now() < cache.exp) return cache.token
   if (!G_CLIENT_ID || !G_CLIENT_SECRET || !G_REFRESH_TOKEN) {
-    throw new Error("Kredensial Google Drive belum diisi di .env")
+    throw new Error("Penyimpanan berkas belum dikonfigurasi di .env")
   }
   const res = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
@@ -31,7 +31,7 @@ async function token(): Promise<string> {
     }),
   })
   const j = (await res.json()) as { access_token?: string; expires_in?: number }
-  if (!res.ok || !j.access_token) throw new Error("Gagal memperbarui token Google")
+  if (!res.ok || !j.access_token) throw new Error("Gagal memperbarui token penyimpanan")
   cache = { token: j.access_token, exp: Date.now() + Math.max(60, (j.expires_in ?? 3600) - 120) * 1000 }
   return cache.token
 }
@@ -48,7 +48,7 @@ async function api(path: string, init?: RequestInit & { json?: unknown }) {
   const data = text ? JSON.parse(text) : {}
   if (!res.ok) {
     throw new Error(
-      "Drive API " + res.status + ": " + (data?.error?.message ?? text.slice(0, 200))
+      "Penyimpanan berkas " + res.status + ": " + (data?.error?.message ?? text.slice(0, 200))
     )
   }
   return data
@@ -127,7 +127,7 @@ export async function unggahBerkas(
   const text = await res.text()
   const data = JSON.parse(text || "{}")
   if (!res.ok) {
-    throw new Error("Unggah Drive " + res.status + ": " + (data?.error?.message ?? text.slice(0, 200)))
+    throw new Error("Unggah berkas " + res.status + ": " + (data?.error?.message ?? text.slice(0, 200)))
   }
   return data as BerkasDrive
 }
@@ -137,7 +137,7 @@ export async function hapusBerkas(id: string): Promise<void> {
     method: "DELETE",
     headers: { Authorization: "Bearer " + (await token()) },
   })
-  if (!res.ok && res.status !== 404) throw new Error("Gagal menghapus berkas Drive")
+  if (!res.ok && res.status !== 404) throw new Error("Gagal menghapus berkas")
 }
 
 export async function tokenInternal(): Promise<string> {

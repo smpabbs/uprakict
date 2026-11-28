@@ -50,7 +50,7 @@ export default async function NilaiPage({
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-wider text-[#0f766e]">Rekap &amp; penilaian</p>
             <h1 className="mt-1 text-xl font-semibold text-[#0f172a]">{ujian.nama}</h1>
-            <p className="mt-1 text-sm text-[#64748b]">
+            <p className="mt-1 text-sm text-[#556172]">
               {sekolah} · {ujian.tahunAjaran} semester {ujian.semester} · acuan kumpul {labelBatas()}
             </p>
           </div>
@@ -63,7 +63,7 @@ export default async function NilaiPage({
                 { label: "Dinilai", v: barisAktif.filter((b) => b!.nilai !== "").length },
               ].map((s) => (
                 <div key={s.label} className="rounded-xl border border-[#e2e8f0] bg-[#fbfdff] px-3 py-2">
-                  <p className="text-[10px] font-medium uppercase tracking-wide text-[#94a3b8]">{s.label}</p>
+                  <p className="text-[10px] font-medium uppercase tracking-wide text-[#5f6b7a]">{s.label}</p>
                   <p className="text-lg font-semibold text-[#0f172a]">{s.v}</p>
                 </div>
               ))}
@@ -91,7 +91,7 @@ export default async function NilaiPage({
       ) : (
         <section className="rounded-2xl border border-[#e2e8f0] bg-white">
           <div className="flex flex-wrap items-center gap-2 border-b border-[#e2e8f0] p-3">
-            <span className="px-1 text-[11px] font-semibold uppercase tracking-wider text-[#94a3b8]">
+            <span className="px-1 text-[11px] font-semibold uppercase tracking-wider text-[#5f6b7a]">
               Kelas ampu
             </span>
             {tugas.map((t) => {
@@ -102,10 +102,10 @@ export default async function NilaiPage({
                   href={`/nilai?k=${encodeURIComponent(key(t.p))}`}
                   className={
                     "rounded-lg px-3 py-1.5 text-[12px] font-semibold transition " +
-                    (on ? "bg-[#0f766e] text-white shadow-sm" : "bg-[#f1f5f9] text-[#475569] hover:bg-[#e2e8f0]")
+                    (on ? "bg-[#115e59] text-white shadow-sm" : "bg-[#f1f5f9] text-[#475569] hover:bg-[#e2e8f0]")
                   }
                 >
-                  {t.p.label} <span className={on ? "text-white/70" : "text-[#94a3b8]"}>({t.siswa.length})</span>
+                  {t.p.label} <span className={on ? "text-white/70" : "text-[#5f6b7a]"}>({t.siswa.length})</span>
                 </Link>
               )
             })}
@@ -160,7 +160,7 @@ export default async function NilaiPage({
                   </pre>
                 )}
                 {!ada && (
-                  <p className="mt-2 text-[12.5px] text-[#64748b]">
+                  <p className="mt-2 text-[12.5px] text-[#556172]">
                     Belum ada soal untuk jenjang/progul ini. Unggah di menu Soal.
                   </p>
                 )}
@@ -170,7 +170,7 @@ export default async function NilaiPage({
 
           <div className="overflow-x-auto">
             <table className="w-full text-[13px]">
-              <thead className="bg-[#f8fafc] text-left text-[11px] uppercase tracking-wide text-[#64748b]">
+              <thead className="bg-[#f8fafc] text-left text-[11px] uppercase tracking-wide text-[#556172]">
                 <tr>
                   <th className="px-4 py-2.5 font-semibold">NIS</th>
                   <th className="px-4 py-2.5 font-semibold">Nama</th>
@@ -181,7 +181,7 @@ export default async function NilaiPage({
               <tbody>
                 {barisAktif.map((b) => (
                   <tr key={b!.nis + b!.nama} className="border-t border-[#eef2f6] align-middle hover:bg-[#fbfdff]">
-                    <td className="whitespace-nowrap px-4 py-2.5 font-mono text-[12px] text-[#64748b]">{b!.nis}</td>
+                    <td className="whitespace-nowrap px-4 py-2.5 font-mono text-[12px] text-[#556172]">{b!.nis}</td>
                     <td className="px-4 py-2.5 font-medium text-[#0f172a]">{b!.nama}</td>
                     <td className="px-4 py-2.5">
                       {b!.berkas ? (
@@ -210,7 +210,7 @@ export default async function NilaiPage({
                           >
                             {terlambat(b!.berkas.createdTime) ? "terlambat" : "tepat"}
                           </span>
-                          <span className="ml-1 text-[10px] text-[#94a3b8]">
+                          <span className="ml-1 text-[10px] text-[#5f6b7a]">
                             {new Date(b!.berkas.createdTime).toLocaleString("id-ID")}
                           </span>
                         </div>
@@ -242,11 +242,11 @@ export default async function NilaiPage({
                           placeholder="catatan untuk siswa"
                           className="min-w-[140px] flex-1 rounded-lg border border-[#e2e8f0] px-2 py-1.5 text-[13px] focus:border-[#0f766e] focus:outline-none focus:ring-2 focus:ring-[#99f6e4]"
                         />
-                        <button className="rounded-lg bg-[#0f766e] px-3 py-1.5 text-[12px] font-semibold text-white transition hover:bg-[#115e59]">
+                        <button className="rounded-lg bg-[#115e59] px-3 py-1.5 text-[12px] font-semibold text-white transition hover:bg-[#0c4a44]">
                           Simpan
                         </button>
                         {b!.oleh && (
-                          <span className="w-full text-[10px] text-[#94a3b8]">
+                          <span className="w-full text-[10px] text-[#5f6b7a]">
                             {b!.oleh}
                             {b!.pada ? ` · ${new Date(b!.pada).toLocaleString("id-ID")}` : ""}
                           </span>
@@ -257,7 +257,7 @@ export default async function NilaiPage({
                 ))}
                 {barisAktif.length === 0 && (
                   <tr>
-                    <td colSpan={4} className="px-4 py-10 text-center text-[13px] text-[#94a3b8]">
+                    <td colSpan={4} className="px-4 py-10 text-center text-[13px] text-[#5f6b7a]">
                       Tidak ada siswa pada kelas ini.
                     </td>
                   </tr>

@@ -8,26 +8,26 @@ export default function Error({
   reset: () => void
 }) {
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-muted/40">
-      <div className="w-full max-w-lg rounded-xl border bg-background p-6 space-y-3">
-        <h1 className="text-lg font-bold text-destructive">Terjadi kesalahan di halaman ini</h1>
-        <p className="text-sm text-muted-foreground">
+    <div className="flex min-h-screen items-center justify-center bg-[#f6f8fb] p-6">
+      <div className="w-full max-w-lg space-y-3 rounded-2xl border border-[#e2e8f0] bg-white p-6 shadow-sm">
+        <h1 className="text-lg font-semibold text-[#b91c1c]">Terjadi kesalahan di halaman ini</h1>
+        <p className="text-[13px] text-[#334155]">
           Salin tulisan di kotak bawah ini dan kirimkan ke admin agar bisa diperbaiki.
         </p>
-        <pre className="text-xs bg-muted p-3 rounded overflow-auto whitespace-pre-wrap break-words">
+        <pre className="whitespace-pre-wrap break-words rounded-lg bg-[#f1f5f9] p-3 text-[12px] text-[#334155]">
           {error?.name}: {error?.message}
           {error?.digest ? `\nDigest: ${error.digest}` : ""}
         </pre>
         <div className="flex gap-2">
           <button
             onClick={reset}
-            className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium"
+            className="rounded-lg bg-[#115e59] px-4 py-2 text-[13px] font-semibold text-white transition hover:bg-[#0c4a44]"
           >
             Coba lagi
           </button>
           <a
             href="/login"
-            className="px-4 py-2 rounded-md border text-sm font-medium"
+            className="rounded-lg border border-[#cbd5e1] px-4 py-2 text-[13px] font-semibold text-[#334155] transition hover:bg-[#f1f5f9]"
           >
             Ke halaman masuk
           </a>

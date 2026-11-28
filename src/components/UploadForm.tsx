@@ -57,45 +57,49 @@ export default function UploadForm({ maksMb, tutup }: { maksMb: number; tutup: s
 
   return (
     <div className="space-y-4">
-      <div className="rounded-xl border border-dashed p-6 text-center space-y-3">
+      <div className="space-y-3 rounded-xl border border-dashed border-[#cbd5e1] bg-[#f8fafc] p-6 text-center">
         <input
           ref={inputRef}
           type="file"
           onChange={(e) => pilih(e.target.files?.[0] ?? null)}
-          className="block w-full text-sm file:mr-3 file:px-3 file:py-2 file:rounded-md file:border-0 file:bg-primary file:text-primary-foreground"
+          className="block w-full text-[13px] text-[#334155] file:mr-3 file:rounded-lg file:border-0 file:bg-[#334155] file:px-3 file:py-2 file:text-[13px] file:font-semibold file:text-white"
           accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip,.rar,.jpg,.jpeg,.png,.mp4,.txt"
         />
-        <p className="text-xs text-muted-foreground">
+        <p className="text-[12px] text-[#5f6b7a]">
           Maksimal {maksMb} MB. PDF, dokumen, gambar, arsip, atau video pendek.
           {tutup ? ` Batas pengumpulan: ${tutup}.` : ""}
         </p>
       </div>
 
       {file && (
-        <p className="text-sm">
-          Dipilih: <strong className="break-all">{file.name}</strong> ({(file.size / 1048576).toFixed(2)} MB)
+        <p className="text-[13px] text-[#334155]">
+          Dipilih: <strong className="break-all text-[#0f172a]">{file.name}</strong> ({(file.size / 1048576).toFixed(2)} MB)
         </p>
       )}
 
       {kirim && (
         <div className="space-y-1">
-          <div className="h-2 bg-muted rounded overflow-hidden">
-            <div className="h-full bg-primary transition-all" style={{ width: `${progress}%` }} />
+          <div className="h-2 overflow-hidden rounded-full bg-[#e2e8f0]">
+            <div className="h-full bg-[#115e59] transition-all" style={{ width: `${progress}%` }} />
           </div>
-          <p className="text-xs text-muted-foreground">Mengunggah… {progress}%</p>
+          <p className="text-[12px] text-[#5f6b7a]">Mengunggah… {progress}%</p>
         </div>
       )}
 
-      {pesan && <div className="text-sm bg-emerald-50 text-emerald-700 p-3 rounded-md">{pesan}</div>}
-      {error && <div className="text-sm bg-destructive/10 text-destructive p-3 rounded-md">{error}</div>}
+      {pesan && (
+        <div className="rounded-lg border border-[#bbf7d0] bg-[#f0fdf4] p-3 text-[13px] text-[#15803d]">{pesan}</div>
+      )}
+      {error && (
+        <div className="rounded-lg border border-[#fecaca] bg-[#fef2f2] p-3 text-[13px] text-[#b91c1c]">{error}</div>
+      )}
 
       <button
         type="button"
         onClick={unggah}
         disabled={!file || kirim}
-        className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50"
+        className="rounded-lg bg-[#115e59] px-4 py-2.5 text-[13px] font-semibold text-white transition hover:bg-[#0c4a44] disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {kirim ? "Mengunggah…" : "Unggah ke Google Drive"}
+        {kirim ? "Mengunggah…" : "Kirim berkas"}
       </button>
     </div>
   )
