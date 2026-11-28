@@ -1,5 +1,5 @@
 // Soal / instruksi ujian per jenjang (7/8/9) dan progul (ICT / Non-ICT).
-// Disimpan di Google Drive sebagai _soal.json di folder ujian — tanpa database.
+// Berkas soal disimpan di subfolder _soal; metadata di _soal.json — tanpa database.
 import {
   pastikanFolder,
   daftarBerkas,
@@ -14,6 +14,9 @@ import { UJIAN } from "./env"
 export interface Soal {
   judul: string
   isi: string
+  fileId?: string
+  fileName?: string
+  mime?: string
   updated_at?: string
   oleh?: string
 }
@@ -21,6 +24,7 @@ export interface Soal {
 export type PetaSoal = Record<string, Soal>
 
 const NAMA_BERKAS = "_soal.json"
+const NAMA_FOLDER = "_soal"
 
 /** Kunci slot: "7-ICT", "7-NONICT", ... */
 export function kunciSoal(tingkat: string | number, target: "ICT" | "NONICT"): string {
@@ -42,6 +46,10 @@ export function semuaSlot(): { kunci: string; tingkat: string; target: "ICT" | "
   return hasil
 }
 
+export function slotDariKunci(kunci: string) {
+  return semuaSlot().find((s) => s.kunci === kunci) ?? null
+}
+
 /** Tingkat (7/8/9) dari kelas "7C" atau "8A IBN FIRNAS". */
 export function tingkatKelas(kelas: string | null | undefined): string | null {
   const m = String(kelas ?? "").trim().match(/^(\d{1,2})/)
@@ -55,6 +63,11 @@ export function targetProgul(progul: string | null | undefined): "ICT" | "NONICT
 
 async function folderUjian(): Promise<string> {
   return pastikanFolder(folderUjianRoot(), namaFolderUjian(UJIAN.tahunAjaran, UJIAN.semester))
+}
+
+/** Folder berkas soal (dibuat bila belum ada). */
+export async function folderSoal(): Promise<string> {
+  return pastikanFolder(await folderUjian(), NAMA_FOLDER)
 }
 
 export async function bacaSoal(): Promise<PetaSoal> {
@@ -73,29 +86,58 @@ export async function bacaSoal(): Promise<PetaSoal> {
   }
 }
 
+/**
+ * Simpan satu slot. Berkas baru menggantikan berkas lama; teks lama
+ * dipertahankan bila tidak dikirim.
+ */
 export async function simpanSoal(
   kunci: string,
-  data: { judul: string; isi: string; oleh: string }
+  data: {
+    judul?: string
+    isi?: string
+    file?: { id: string; name: string; mime: string }
+    oleh: string
+  }
 ): Promise<void> {
   const folder = await folderUjian()
   const lama = await bacaSoal()
-  const peta: PetaSoal = {
-    ...lama,
-    [kunci]: {
-      judul: data.judul,
-      isi: data.isi,
-      oleh: data.oleh,
-      updated_at: new Date().toISOString(),
-    },
+  const sebelum = lama[kunci]
+  const baru: Soal = {
+    judul: data.judul ?? sebelum?.judul ?? "",
+    isi: data.isi ?? sebelum?.isi ?? "",
+    fileId: data.file?.id ?? sebelum?.fileId,
+    fileName: data.file?.name ?? sebelum?.fileName,
+    mime: data.file?.mime ?? sebelum?.mime,
+    updated_at: new Date().toISOString(),
+    oleh: data.oleh,
   }
+  const peta: PetaSoal = { ...lama, [kunci]: baru }
   const isiBaru = new TextEncoder().encode(JSON.stringify(peta, null, 2))
-  const berkas = await daftarBerkas(folder, NAMA_BERKAS)
-  for (const b of berkas) {
+  const berkasLama = await daftarBerkas(folder, NAMA_BERKAS)
+
+  // Unggah versi baru dulu; bacaSoal mengambil yang terbaru (createdTime desc),
+  // jadi metadata lama tetap utuh bila unggahan gagal.
+  const tersimpan = await unggahBerkas(
+    folder,
+    NAMA_BERKAS,
+    isiBaru.buffer as ArrayBuffer,
+    "application/json"
+  )
+  for (const b of berkasLama) {
+    if (b.id === tersimpan.id) continue
     try {
       await hapusBerkas(b.id)
     } catch {
-      /* lanjut */
+      /* biarkan */
     }
   }
-  await unggahBerkas(folder, NAMA_BERKAS, isiBaru.buffer as ArrayBuffer, "application/json")
+
+  // berkas soal lama baru dihapus setelah metadata tersimpan
+  if (data.file && sebelum?.fileId && sebelum.fileId !== data.file.id) {
+    try {
+      await hapusBerkas(sebelum.fileId)
+    } catch {
+      /* biarkan */
+    }
+  }
 }

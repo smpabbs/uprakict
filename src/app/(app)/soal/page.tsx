@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import { ambilAkun } from "@/lib/lms"
-import { bacaSoal, semuaSlot } from "@/lib/soal"
+import { ambilAkun, penugasanGuru } from "@/lib/lms"
+import { bacaSoal, semuaSlot, tingkatKelas } from "@/lib/soal"
+import { MAKS_MB } from "@/lib/env"
 
 export const runtime = "edge"
 export const dynamic = "force-dynamic"
@@ -22,16 +23,23 @@ export default async function SoalPage({
   if (!["admin", "guru"].includes(akun.role)) redirect("/")
 
   const peta = await bacaSoal()
-  const slot = semuaSlot()
+  const semua = semuaSlot()
+  const penugasan = akun.role === "guru" ? await penugasanGuru(akun.id) : []
+  const slot =
+    akun.role === "admin"
+      ? semua
+      : semua.filter((s) =>
+          penugasan.some((p) => tingkatKelas(p.kelas) === s.tingkat && p.target === s.target)
+        )
 
   return (
     <div className="space-y-5">
       <section className="rounded-2xl border border-[#e2e8f0] bg-white p-5">
         <p className="text-[11px] font-semibold uppercase tracking-wider text-[#0f766e]">Pengaturan ujian</p>
-        <h1 className="mt-1 text-xl font-semibold text-[#0f172a]">Soal &amp; instruksi per jenjang</h1>
+        <h1 className="mt-1 text-xl font-semibold text-[#0f172a]">Berkas soal per jenjang</h1>
         <p className="mt-1 text-sm text-[#64748b]">
-          Enam slot: kelas 7, 8, 9 untuk progul ICT dan non-ICT (TCP/VCP). Isi ini otomatis tampil ke siswa
-          sesuai tingkat dan progulnya, dan ke guru saat menilai.
+          Unggah satu berkas untuk tiap slot. Unggahan berlaku untuk semua siswa dan guru di slot itu;
+          guru hanya melihat slot yang diampu.
         </p>
         {sp.ok && (
           <p className="mt-4 rounded-xl border border-[#bbf7d0] bg-[#f0fdf4] px-3 py-2 text-[13px] text-[#15803d]">
@@ -45,9 +53,17 @@ export default async function SoalPage({
         )}
       </section>
 
+      {slot.length === 0 && (
+        <div className="rounded-2xl border border-[#fde68a] bg-[#fffbeb] p-5 text-[13px] text-[#92400e]">
+          Anda belum ditugaskan mengajar ICT di LMS, jadi belum ada slot soal yang bisa diunggah.
+          Hubungi kurikulum bila seharusnya ada.
+        </div>
+      )}
+
       <div className="grid gap-4 lg:grid-cols-2">
         {slot.map((s) => {
           const isi = peta[s.kunci]
+          const terisi = Boolean(isi?.fileId || isi?.judul || isi?.isi)
           return (
             <section key={s.kunci} className="rounded-2xl border border-[#e2e8f0] bg-white">
               <div className="flex items-center justify-between border-b border-[#e2e8f0] px-5 py-3">
@@ -62,17 +78,45 @@ export default async function SoalPage({
                 <span
                   className={
                     "rounded-full px-2 py-1 text-[10px] font-semibold " +
-                    (isi?.isi ? "bg-[#dcfce7] text-[#15803d]" : "bg-[#fef3c7] text-[#b45309]")
+                    (terisi ? "bg-[#dcfce7] text-[#15803d]" : "bg-[#fef3c7] text-[#b45309]")
                   }
                 >
-                  {isi?.isi ? "TERISI" : "KOSONG"}
+                  {terisi ? "TERISI" : "KOSONG"}
                 </span>
               </div>
-              <form method="POST" action="/api/soal" className="space-y-3 p-5">
+
+              {isi?.fileId && (
+                <div className="border-b border-[#e2e8f0] px-5 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-[#94a3b8]">Berkas soal</p>
+                  <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#e2e8f0] bg-[#fbfdff] p-3">
+                    <p className="min-w-0 truncate text-[13px] font-medium text-[#0f172a]">
+                      {isi.fileName || isi.judul}
+                    </p>
+                    <div className="flex gap-2">
+                      <a
+                        href={`/api/berkas/${isi.fileId}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="rounded-lg border border-[#e2e8f0] px-2.5 py-1 text-[11px] font-medium text-[#334155] hover:bg-white"
+                      >
+                        Lihat
+                      </a>
+                      <a
+                        href={`/api/berkas/${isi.fileId}?mode=unduh`}
+                        className="rounded-lg border border-[#e2e8f0] px-2.5 py-1 text-[11px] font-medium text-[#334155] hover:bg-white"
+                      >
+                        Unduh
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <form method="POST" action="/api/soal" encType="multipart/form-data" className="space-y-3 p-5">
                 <input type="hidden" name="kunci" value={s.kunci} />
                 <div>
                   <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-[#94a3b8]">
-                    Judul
+                    Judul (opsional)
                   </label>
                   <input
                     name="judul"
@@ -83,21 +127,20 @@ export default async function SoalPage({
                 </div>
                 <div>
                   <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-[#94a3b8]">
-                    Instruksi / soal
+                    Berkas soal
                   </label>
-                  <textarea
-                    name="isi"
-                    defaultValue={isi?.isi ?? ""}
-                    rows={10}
-                    placeholder={"1. Buat dokumen ...\n2. Simpan sebagai PDF ...\n3. Unggah di menu Kumpulkan\n\nKriteria penilaian: ..."}
-                    className="w-full rounded-lg border border-[#e2e8f0] px-3 py-2 font-mono text-[12.5px] leading-relaxed focus:border-[#0f766e] focus:outline-none focus:ring-2 focus:ring-[#99f6e4]"
+                  <input
+                    type="file"
+                    name="berkas"
+                    accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.txt"
+                    className="block w-full rounded-lg border border-[#e2e8f0] px-3 py-2 text-[12px] file:mr-3 file:rounded-md file:border-0 file:bg-[#0f766e] file:px-3 file:py-1.5 file:text-[12px] file:font-semibold file:text-white"
                   />
                   <p className="mt-1 text-[11px] text-[#94a3b8]">
-                    Baris baru dipertahankan. Bisa dipakai untuk daftar langkah dan kriteria penilaian.
+                    PDF, dokumen, atau gambar. Maks {MAKS_MB} MB. Unggahan baru menggantikan berkas lama.
                   </p>
                 </div>
                 <button className="rounded-lg bg-[#0f766e] px-4 py-2 text-[12px] font-semibold text-white transition hover:bg-[#115e59]">
-                  Simpan slot ini
+                  Unggah soal
                 </button>
               </form>
             </section>

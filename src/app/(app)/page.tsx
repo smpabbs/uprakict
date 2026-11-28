@@ -154,11 +154,13 @@ export default async function Beranda() {
   const terbaru = berkas[0]
   const tingkat = tingkatKelas(akun.kelas)
   const target = targetProgul(akun.progul)
-  let soalSiswa: { judul: string; isi: string } | null = null
+  let soalSiswa: { judul: string; isi: string; fileId?: string; fileName?: string } | null = null
   if (tingkat) {
     const peta = await bacaSoal()
     const s = peta[kunciSoal(tingkat, target)]
-    if (s && (s.judul || s.isi)) soalSiswa = { judul: s.judul, isi: s.isi }
+    if (s && (s.judul || s.isi || s.fileId)) {
+      soalSiswa = { judul: s.judul, isi: s.isi, fileId: s.fileId, fileName: s.fileName }
+    }
   }
 
   return (
@@ -237,10 +239,37 @@ export default async function Beranda() {
         </p>
         {soalSiswa ? (
           <>
-            <h2 className="mt-1 text-base font-semibold text-[#0f172a]">{soalSiswa.judul}</h2>
-            <pre className="mt-3 whitespace-pre-wrap break-words rounded-xl bg-[#f8fafc] p-4 font-sans text-[13px] leading-relaxed text-[#334155]">
-              {soalSiswa.isi}
-            </pre>
+            <h2 className="mt-1 text-base font-semibold text-[#0f172a]">
+              {soalSiswa.judul || soalSiswa.fileName || "Soal"}
+            </h2>
+            {soalSiswa.isi && (
+              <pre className="mt-3 whitespace-pre-wrap break-words rounded-xl bg-[#f8fafc] p-4 font-sans text-[13px] leading-relaxed text-[#334155]">
+                {soalSiswa.isi}
+              </pre>
+            )}
+            {soalSiswa.fileId && (
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#e2e8f0] bg-[#fbfdff] p-3">
+                <span className="min-w-0 truncate text-[13px] font-medium text-[#334155]">
+                  {soalSiswa.fileName || "Berkas soal"}
+                </span>
+                <div className="flex gap-2">
+                  <a
+                    href={`/api/berkas/${soalSiswa.fileId}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="rounded-lg border border-[#e2e8f0] bg-white px-3 py-1.5 text-[12px] font-medium text-[#334155] hover:bg-[#f1f5f9]"
+                  >
+                    Lihat
+                  </a>
+                  <a
+                    href={`/api/berkas/${soalSiswa.fileId}?mode=unduh`}
+                    className="rounded-lg border border-[#e2e8f0] bg-white px-3 py-1.5 text-[12px] font-medium text-[#334155] hover:bg-[#f1f5f9]"
+                  >
+                    Unduh
+                  </a>
+                </div>
+              </div>
+            )}
           </>
         ) : (
           <p className="mt-2 text-[13px] text-[#64748b]">

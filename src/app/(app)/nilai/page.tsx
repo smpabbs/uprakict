@@ -113,14 +113,46 @@ export default async function NilaiPage({
           {aktif && (() => {
             const t = tingkatKelas(aktif.p.kelas)
             const s = t ? petaSoal[kunciSoal(t, aktif.p.target)] : undefined
+            const ada = Boolean(s?.fileId || s?.judul || s?.isi)
             return (
               <details className="border-b border-[#e2e8f0] bg-[#fbfdff] px-5 py-3">
                 <summary className="cursor-pointer text-[12px] font-semibold text-[#0f172a]">
-                  Soal / instruksi {aktif.p.label} {s?.judul ? `— ${s.judul}` : "(belum diisi)"}
+                  Soal / instruksi {aktif.p.label}{" "}
+                  {ada ? `— ${s?.judul || s?.fileName || ""}` : "(belum diisi)"}
                 </summary>
-                <pre className="mt-2 whitespace-pre-wrap break-words rounded-xl bg-white p-3 font-sans text-[12.5px] leading-relaxed text-[#334155]">
-                  {s?.isi || "Belum ada instruksi untuk jenjang/progul ini. Isi di menu Soal."}
-                </pre>
+                {s?.fileId && (
+                  <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white p-3">
+                    <span className="min-w-0 truncate text-[12.5px] font-medium text-[#334155]">
+                      {s.fileName || "Berkas soal"}
+                    </span>
+                    <div className="flex gap-2">
+                      <a
+                        href={`/api/berkas/${s.fileId}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="rounded-lg border border-[#e2e8f0] px-2.5 py-1 text-[11px] font-medium text-[#334155] hover:bg-[#f1f5f9]"
+                      >
+                        Lihat
+                      </a>
+                      <a
+                        href={`/api/berkas/${s.fileId}?mode=unduh`}
+                        className="rounded-lg border border-[#e2e8f0] px-2.5 py-1 text-[11px] font-medium text-[#334155] hover:bg-[#f1f5f9]"
+                      >
+                        Unduh
+                      </a>
+                    </div>
+                  </div>
+                )}
+                {s?.isi && (
+                  <pre className="mt-2 whitespace-pre-wrap break-words rounded-xl bg-white p-3 font-sans text-[12.5px] leading-relaxed text-[#334155]">
+                    {s.isi}
+                  </pre>
+                )}
+                {!ada && (
+                  <p className="mt-2 text-[12.5px] text-[#64748b]">
+                    Belum ada soal untuk jenjang/progul ini. Unggah di menu Soal.
+                  </p>
+                )}
               </details>
             )
           })()}

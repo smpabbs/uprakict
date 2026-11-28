@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
-import { ambilAkun, bolehSiswa, siswaSekolah } from "@/lib/lms"
-import { infoBerkas, unduhBerkas } from "@/lib/drive"
-import { daftarBerkas } from "@/lib/drive"
+import { ambilAkun, bolehSiswa, penugasanGuru, siswaSekolah } from "@/lib/lms"
+import { daftarBerkas, infoBerkas, unduhBerkas, type BerkasDrive } from "@/lib/drive"
 import { namaSekolah, folderSekolah } from "@/lib/ujian"
+import { bacaSoal, targetProgul, tingkatKelas } from "@/lib/soal"
 
 export const runtime = "edge"
 export const dynamic = "force-dynamic"
@@ -19,10 +19,29 @@ const INLINE_AMAN = new Set([
   "text/plain",
 ])
 
+async function sajikan(meta: BerkasDrive, request: Request) {
+  const upstream = await unduhBerkas(meta.id)
+  const nama = meta.name.replace(/["\r\n]/g, "")
+  const mime = (meta.mimeType || "application/octet-stream").split(";")[0].trim().toLowerCase()
+  const mauInline = new URL(request.url).searchParams.get("mode") !== "unduh"
+  const inline = mauInline && INLINE_AMAN.has(mime)
+
+  return new NextResponse(upstream.body, {
+    status: 200,
+    headers: {
+      "Content-Type": mime,
+      "Content-Disposition": `${inline ? "inline" : "attachment"}; filename="${nama}"`,
+      "X-Content-Type-Options": "nosniff",
+      "Cache-Control": "private, no-store",
+    },
+  })
+}
+
 /**
  * Menyajikan berkas ujian lewat aplikasi (bukan tautan Google Drive).
- * - siswa: hanya berkas miliknya
- * - guru : hanya berkas dari sekolahnya
+ * - soal  : sesuai jenjang + progul (guru: slot yang diampu)
+ * - siswa : hanya berkas miliknya
+ * - guru  : hanya berkas dari kelas + progul yang diampu
  */
 export async function GET(
   request: Request,
@@ -40,6 +59,27 @@ export async function GET(
 
   const meta = await infoBerkas(id)
   if (!meta) return new NextResponse("Berkas tidak ditemukan", { status: 404 })
+
+  // Berkas soal tinggal di folder _soal, bukan folder sekolah.
+  if (/^[789]-(ICT|NONICT) - /.test(meta.name)) {
+    const peta = await bacaSoal()
+    const kunci = Object.keys(peta).find((k) => peta[k].fileId === id)
+    if (kunci) {
+      const [tingkat, target] = kunci.split("-")
+      let boleh = akun.role === "admin"
+      if (!boleh && akun.role === "siswa") {
+        boleh = tingkatKelas(akun.kelas) === tingkat && targetProgul(akun.progul) === target
+      }
+      if (!boleh && akun.role === "guru") {
+        const daftar = await penugasanGuru(akun.id)
+        boleh = daftar.some(
+          (p) => tingkatKelas(p.kelas) === tingkat && p.target === target
+        )
+      }
+      if (!boleh) return new NextResponse("Tidak berhak", { status: 403 })
+      return sajikan(meta, request)
+    }
+  }
 
   const sekolah = await namaSekolah(akun.sekolah_id)
   const folder = await folderSekolah(sekolah)
@@ -64,19 +104,5 @@ export async function GET(
     }
   }
 
-  const upstream = await unduhBerkas(id)
-  const nama = meta.name.replace(/["\r\n]/g, "")
-  const mime = (meta.mimeType || "application/octet-stream").split(";")[0].trim().toLowerCase()
-  const mauInline = new URL(request.url).searchParams.get("mode") !== "unduh"
-  const inline = mauInline && INLINE_AMAN.has(mime)
-
-  return new NextResponse(upstream.body, {
-    status: 200,
-    headers: {
-      "Content-Type": mime,
-      "Content-Disposition": `${inline ? "inline" : "attachment"}; filename="${nama}"`,
-      "X-Content-Type-Options": "nosniff",
-      "Cache-Control": "private, no-store",
-    },
-  })
+  return sajikan(meta, request)
 }
