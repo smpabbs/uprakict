@@ -12,7 +12,7 @@ const tabCls = (aktif: boolean) =>
   "rounded-lg px-3 py-1.5 text-[13px] font-semibold transition " +
   (aktif
     ? "bg-[#115e59] text-white shadow-sm"
-    : "text-[#334155] hover:bg-[#dde5ee] hover:text-[#0f172a]")
+    : "text-[#334155] hover:bg-[#d2dbe6] hover:text-[#0f172a]")
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -42,7 +42,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="min-h-screen">
-      <header className="sticky top-0 z-30 border-b border-[#cbd5e1] bg-[#f5f8fb]/90 backdrop-blur">
+      <header className="sticky top-0 z-30 border-b border-[#b7c2cf] bg-[#eef2f7]/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 sm:px-6">
           <Link href="/" className="flex items-center gap-2.5">
             <span className="grid h-9 w-9 place-items-center rounded-xl bg-[#115e59] text-sm font-bold text-white shadow-sm">
@@ -50,7 +50,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             </span>
             <span className="hidden sm:block leading-tight">
               <span className="block text-[13px] font-semibold text-[#0f172a]">Ujian Praktik ICT</span>
-              <span className="block text-[11px] text-[#495663]">{ujianNama || "SMP ABBS Surakarta"}</span>
+              <span className="block text-[11px] text-[#37424f]">{ujianNama || "SMP ABBS Surakarta"}</span>
             </span>
           </Link>
 
@@ -76,8 +76,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           </nav>
 
           <div className="ml-auto flex items-center gap-2">
-            <div className="hidden items-center gap-2 rounded-xl border border-[#cbd5e1] bg-[#f5f8fb] px-2.5 py-1.5 sm:flex">
-              <span className="grid h-6 w-6 place-items-center rounded-full bg-[#b8ece0] text-[10px] font-bold text-[#0f6b63]">
+            <div className="hidden items-center gap-2 rounded-xl border border-[#b7c2cf] bg-[#eef2f7] px-2.5 py-1.5 sm:flex">
+              <span className="grid h-6 w-6 place-items-center rounded-full bg-[#a5e2d3] text-[10px] font-bold text-[#0f5f58]">
                 {inisial}
               </span>
               <span className="max-w-[160px] truncate text-[12px] font-medium text-[#334155]">
@@ -85,7 +85,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
               </span>
             </div>
             <form method="POST" action="/api/keluar">
-              <button className="rounded-lg border border-[#b6c2d0] px-3 py-1.5 text-[12px] font-semibold text-[#334155] transition hover:border-[#f2b8b8] hover:bg-[#fdeaea] hover:text-[#b91c1c]">
+              <button className="rounded-lg border border-[#a7b5c4] px-3 py-1.5 text-[12px] font-semibold text-[#334155] transition hover:border-[#e9adad] hover:bg-[#f9dede] hover:text-[#991b1b]">
                 Keluar
               </button>
             </form>
@@ -98,7 +98,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         {children}
       </main>
 
-      <footer className="mx-auto max-w-6xl px-4 pb-8 text-[11px] text-[#4d5968] sm:px-6">
+      <footer className="mx-auto max-w-6xl px-4 pb-8 text-[11px] text-[#3f4a58] sm:px-6">
         SMP ABBS Surakarta · Program ICT — berkas ujian tersimpan aman di server sekolah.
       </footer>
     </div>

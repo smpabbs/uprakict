@@ -26,41 +26,41 @@ export default async function UnggahPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-5">
-      <section className="rounded-2xl border border-[#cbd5e1] bg-[#f5f8fb] p-5 sm:p-6">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-[#0f6b63]">Pengumpulan berkas</p>
+      <section className="rounded-2xl border border-[#b7c2cf] bg-[#eef2f7] p-5 sm:p-6">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-[#0f5f58]">Pengumpulan berkas</p>
         <h1 className="mt-1 text-xl font-semibold text-[#0f172a]">{ujian.nama}</h1>
-        <p className="mt-1 text-sm text-[#495663]">
+        <p className="mt-1 text-sm text-[#37424f]">
           {akun.nama} · NIS {akun.nis ?? "-"} · {sekolah}
           {akun.kelas ? ` · Kelas ${akun.kelas}` : ""}
         </p>
         {ujian.deskripsi && <p className="mt-3 text-[13px] text-[#334155]">{ujian.deskripsi}</p>}
-        <p className="mt-2 text-[12px] text-[#4d5968]">
+        <p className="mt-2 text-[12px] text-[#3f4a58]">
           Berkas hanya bisa dilihat lewat akun sekolah Anda.
         </p>
       </section>
 
       {tutupLewat ? (
-        <div className="rounded-2xl border border-[#f2b8b8] bg-[#fdeaea] p-5 text-sm text-[#b91c1c]">
+        <div className="rounded-2xl border border-[#e9adad] bg-[#f9dede] p-5 text-sm text-[#991b1b]">
           Batas pengumpulan sudah lewat ({ujian.tutup}). Hubungi guru ICT bila masih perlu mengumpulkan.
         </div>
       ) : (
-        <section className="rounded-2xl border border-[#cbd5e1] bg-[#f5f8fb] p-5 sm:p-6">
+        <section className="rounded-2xl border border-[#b7c2cf] bg-[#eef2f7] p-5 sm:p-6">
           <UploadForm maksMb={MAKS_MB} tutup={ujian.tutup} />
         </section>
       )}
 
       {berkas.length > 0 && (
-        <section className="rounded-2xl border border-[#cbd5e1] bg-[#f5f8fb] p-5">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-[#4d5968]">Berkas tersimpan</p>
+        <section className="rounded-2xl border border-[#b7c2cf] bg-[#eef2f7] p-5">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-[#3f4a58]">Berkas tersimpan</p>
           <div className="mt-2 space-y-2">
             {berkas.map((b) => (
               <div
                 key={b.id}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#cbd5e1] bg-[#eef3f8] px-3 py-2"
+                className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#b7c2cf] bg-[#e5ebf2] px-3 py-2"
               >
                 <div className="min-w-0">
                   <p className="truncate text-[13px] font-medium text-[#0f172a]">{b.name}</p>
-                  <p className="text-[11px] text-[#495663]">
+                  <p className="text-[11px] text-[#37424f]">
                     {new Date(b.createdTime).toLocaleString("id-ID")}
                     {b.size ? ` · ${(Number(b.size) / 1048576).toFixed(2)} MB` : ""}
                   </p>
@@ -70,13 +70,13 @@ export default async function UnggahPage() {
                     href={`/api/berkas/${b.id}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="rounded-lg border border-[#b6c2d0] px-2.5 py-1 text-[11px] font-semibold text-[#334155] hover:bg-[#dde5ee]"
+                    className="rounded-lg border border-[#a7b5c4] px-2.5 py-1 text-[11px] font-semibold text-[#334155] hover:bg-[#d2dbe6]"
                   >
                     Lihat
                   </a>
                   <a
                     href={`/api/berkas/${b.id}?mode=unduh`}
-                    className="rounded-lg border border-[#b6c2d0] px-2.5 py-1 text-[11px] font-semibold text-[#334155] hover:bg-[#dde5ee]"
+                    className="rounded-lg border border-[#a7b5c4] px-2.5 py-1 text-[11px] font-semibold text-[#334155] hover:bg-[#d2dbe6]"
                   >
                     Unduh
                   </a>
@@ -84,13 +84,13 @@ export default async function UnggahPage() {
               </div>
             ))}
           </div>
-          <p className="mt-3 text-[11px] text-[#4d5968]">
+          <p className="mt-3 text-[11px] text-[#3f4a58]">
             Mengunggah berkas baru akan mengganti berkas lama.
           </p>
         </section>
       )}
 
-      <Link href="/" className="inline-block text-[13px] font-medium text-[#0f6b63] hover:underline">
+      <Link href="/" className="inline-block text-[13px] font-medium text-[#0f5f58] hover:underline">
         ← Kembali ke beranda
       </Link>
     </div>

@@ -57,7 +57,7 @@ export default function UploadForm({ maksMb, tutup }: { maksMb: number; tutup: s
 
   return (
     <div className="space-y-4">
-      <div className="space-y-3 rounded-xl border border-dashed border-[#b6c2d0] bg-[#e6ecf3] p-6 text-center">
+      <div className="space-y-3 rounded-xl border border-dashed border-[#a7b5c4] bg-[#dbe3ec] p-6 text-center">
         <input
           ref={inputRef}
           type="file"
@@ -65,7 +65,7 @@ export default function UploadForm({ maksMb, tutup }: { maksMb: number; tutup: s
           className="block w-full text-[13px] text-[#334155] file:mr-3 file:rounded-lg file:border-0 file:bg-[#334155] file:px-3 file:py-2 file:text-[13px] file:font-semibold file:text-white"
           accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip,.rar,.jpg,.jpeg,.png,.mp4,.txt"
         />
-        <p className="text-[12px] text-[#4d5968]">
+        <p className="text-[12px] text-[#3f4a58]">
           Maksimal {maksMb} MB. PDF, dokumen, gambar, arsip, atau video pendek.
           {tutup ? ` Batas pengumpulan: ${tutup}.` : ""}
         </p>
@@ -79,18 +79,18 @@ export default function UploadForm({ maksMb, tutup }: { maksMb: number; tutup: s
 
       {kirim && (
         <div className="space-y-1">
-          <div className="h-2 overflow-hidden rounded-full bg-[#cbd5e1]">
+          <div className="h-2 overflow-hidden rounded-full bg-[#b7c2cf]">
             <div className="h-full bg-[#115e59] transition-all" style={{ width: `${progress}%` }} />
           </div>
-          <p className="text-[12px] text-[#4d5968]">Mengunggah… {progress}%</p>
+          <p className="text-[12px] text-[#3f4a58]">Mengunggah… {progress}%</p>
         </div>
       )}
 
       {pesan && (
-        <div className="rounded-lg border border-[#a7e8bc] bg-[#e7f6ed] p-3 text-[13px] text-[#166534]">{pesan}</div>
+        <div className="rounded-lg border border-[#98dcb0] bg-[#dcede2] p-3 text-[13px] text-[#14532d]">{pesan}</div>
       )}
       {error && (
-        <div className="rounded-lg border border-[#f2b8b8] bg-[#fdeaea] p-3 text-[13px] text-[#b91c1c]">{error}</div>
+        <div className="rounded-lg border border-[#e9adad] bg-[#f9dede] p-3 text-[13px] text-[#991b1b]">{error}</div>
       )}
 
       <button

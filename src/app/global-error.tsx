@@ -10,12 +10,12 @@ export default function GlobalError({
   return (
     <html lang="id">
       <body style={{ fontFamily: "system-ui, sans-serif", padding: 24 }}>
-        <h1 style={{ color: "#b91c1c", fontSize: 18 }}>Aplikasi gagal dimuat</h1>
+        <h1 style={{ color: "#991b1b", fontSize: 18 }}>Aplikasi gagal dimuat</h1>
         <p style={{ fontSize: 14 }}>Kirimkan teks berikut ke admin:</p>
         <pre
           style={{
             fontSize: 12,
-            background: "#e6ecf3",
+            background: "#dbe3ec",
             padding: 12,
             borderRadius: 8,
             whiteSpace: "pre-wrap",
