@@ -55,11 +55,15 @@ export async function POST(request: Request) {
 
     let unggahId: string | null = null
     try {
+      // nama berkas di Drive WAJIB ASCII: Drive menolak nama non-ASCII pada unggahan
+      // multipart. Judul di metadata tetap memakai nama asli.
+      const aman = (berkas.name || "soal").normalize("NFKD").replace(/[^\x20-\x7E]/g, "")
       const asli = (berkas.name || "soal").replace(/[\\/:*?"<>|]/g, "").trim() || "soal"
+      const namaDrive = aman.replace(/[\\/:*?"<>|]/g, "").trim() || "soal.pdf"
       const folder = await folderSoal()
       const hasil = await unggahBerkas(
         folder,
-        `${kunci} - ${asli}`,
+        `${kunci} - ${namaDrive}`,
         await berkas.arrayBuffer(),
         berkas.type
       )

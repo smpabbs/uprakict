@@ -17,6 +17,8 @@ export const UJIAN = {
   nama: process.env.UJIAN_NAMA ?? "Ujian Praktik ICT",
   deskripsi: process.env.UJIAN_DESKRIPSI ?? "",
   tutup: process.env.UJIAN_TUTUP ?? "",
+  // jam mundur untuk penandaan terlambat saat UJIAN_TUTUP kosong
+  mundur: Number(process.env.UJIAN_MUNDUR_JAM ?? "2"),
 }
 
 export const MAKS_MB = Number(process.env.UJIAN_MAKS_MB ?? '50')

@@ -49,6 +49,38 @@ export async function infoUjian(): Promise<UjianAktif> {
   }
 }
 
+function keMs(nilai: string | undefined): number | null {
+  if (!nilai) return null
+  const iso = `/${nilai.trim().replace(/ /g, "T")}`
+  const ms = Date.parse(iso)
+  return Number.isNaN(ms) ? null : ms
+}
+
+/**
+ * Waktu mundur pengumpulan (UJIAN_TUTUP), atau jam mundur 2 jam bila kosong.
+ * Hanya untuk penandaan terlambat — pengumpulan tetap terbuka selama UJIAN_TUTUP kosong.
+ */
+export function waktuMundur(): { ms: number; pakaiJadwal: boolean } | null {
+  const jadwal = keMs(UJIAN.tutup)
+  if (jadwal !== null) return { ms: jadwal, pakaiJadwal: true }
+  return UJIAN.mundur ? { ms: Date.now() - UJIAN.mundur * 3_600_000, pakaiJadwal: false } : null
+}
+
+/** Teks batas waktu yang ditampilkan ke pengguna. */
+export function labelBatas(): string {
+  const w = waktuMundur()
+  if (!w) return "Belum ditentukan"
+  return w.pakaiJadwal
+    ? UJIAN.tutup
+    : `${new Date(w.ms).toLocaleString("id-ID", { timeZone: "Asia/Jakarta" })} WIB`
+}
+
+export function terlambat(createdTime: string | undefined): boolean {
+  const w = waktuMundur()
+  const kumpul = keMs(createdTime)
+  return Boolean(w && kumpul !== null && kumpul > w.ms)
+}
+
 export async function namaSekolah(sekolahId: string | null): Promise<string> {
   if (!sekolahId) return "Tanpa Sekolah"
   try {

@@ -2,7 +2,7 @@ import Link from "next/link"
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { ambilAkun, siswaSekolah, penugasanGuru, siswaCocok } from "@/lib/lms"
-import { infoUjian, namaSekolah, berkasSiswa, rekapSekolah } from "@/lib/ujian"
+import { infoUjian, namaSekolah, berkasSiswa, rekapSekolah, waktuMundur, labelBatas, terlambat } from "@/lib/ujian"
 import { bacaSoal, kunciSoal, targetProgul, tingkatKelas } from "@/lib/soal"
 
 export const runtime = "edge"
@@ -82,7 +82,7 @@ export default async function Beranda() {
               <h1 className="mt-1 text-xl font-semibold text-[#0f172a] sm:text-2xl">{ujian.nama}</h1>
               <p className="mt-1 text-sm text-[#64748b]">
                 {sekolah} · {ujian.tahunAjaran} semester {ujian.semester}
-                {ujian.tutup ? ` · batas ${ujian.tutup}` : " · masih dibuka"}
+                {ujian.tutup ? ` · batas ${labelBatas()}` : " · pengumpulan masih dibuka"}
               </p>
             </div>
             <Link
@@ -154,14 +154,16 @@ export default async function Beranda() {
   const terbaru = berkas[0]
   const tingkat = tingkatKelas(akun.kelas)
   const target = targetProgul(akun.progul)
-  let soalSiswa: { judul: string; isi: string; fileId?: string; fileName?: string } | null = null
+  const mundur = waktuMundur()
+  let soalSiswa: { judul: string; isi: string; fileId?: string; fileName?: string; mime?: string } | null = null
   if (tingkat) {
     const peta = await bacaSoal()
     const s = peta[kunciSoal(tingkat, target)]
     if (s && (s.judul || s.isi || s.fileId)) {
-      soalSiswa = { judul: s.judul, isi: s.isi, fileId: s.fileId, fileName: s.fileName }
+      soalSiswa = { judul: s.judul, isi: s.isi, fileId: s.fileId, fileName: s.fileName, mime: s.mime }
     }
   }
+  const pdfSoal = soalSiswa?.fileId && soalSiswa.mime === "application/pdf" ? soalSiswa : null
 
   return (
     <div className="space-y-5">
@@ -176,7 +178,13 @@ export default async function Beranda() {
                 {akun.kelas ? ` · Kelas ${akun.kelas}` : ""}
               </p>
             </div>
-            {terbaru ? <Chip tone="ok">Sudah mengumpulkan</Chip> : <Chip tone="warn">Belum mengumpulkan</Chip>}
+            {terbaru ? (
+              <Chip tone={terlambat(terbaru.createdTime) ? "warn" : "ok"}>
+                {terlambat(terbaru.createdTime) ? "Terkumpul (terlambat)" : "Sudah mengumpulkan"}
+              </Chip>
+            ) : (
+              <Chip tone="warn">Belum mengumpulkan</Chip>
+            )}
           </div>
         </div>
 
@@ -191,7 +199,12 @@ export default async function Beranda() {
           </div>
           <div className="rounded-xl border border-[#e2e8f0] bg-[#fbfdff] p-4">
             <p className="text-[11px] font-medium uppercase tracking-wide text-[#94a3b8]">Batas waktu</p>
-            <p className="mt-1 text-sm font-semibold text-[#0f172a]">{ujian.tutup || "Belum ditentukan"}</p>
+            <p className="mt-1 text-sm font-semibold text-[#0f172a]">{labelBatas()}</p>
+            {mundur && !mundur.pakaiJadwal && (
+              <p className="mt-1 text-[11px] leading-relaxed text-[#64748b]">
+                Pengumpulan tetap terbuka. Waktu acuan hanya untuk menandai siswa yang terlambat.
+              </p>
+            )}
             <Link
               href="/unggah"
               className="mt-3 block rounded-xl bg-[#0f766e] px-4 py-2 text-center text-[13px] font-semibold text-white transition hover:bg-[#115e59]"
@@ -210,6 +223,7 @@ export default async function Beranda() {
                 <p className="text-[12px] text-[#64748b]">
                   {new Date(terbaru.createdTime).toLocaleString("id-ID")}
                   {terbaru.size ? ` · ${(Number(terbaru.size) / 1048576).toFixed(2)} MB` : ""}
+                  {terlambat(terbaru.createdTime) ? " · terlambat" : ""}
                 </p>
               </div>
               <div className="flex gap-2">
@@ -247,28 +261,26 @@ export default async function Beranda() {
                 {soalSiswa.isi}
               </pre>
             )}
-            {soalSiswa.fileId && (
-              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#e2e8f0] bg-[#fbfdff] p-3">
-                <span className="min-w-0 truncate text-[13px] font-medium text-[#334155]">
-                  {soalSiswa.fileName || "Berkas soal"}
-                </span>
-                <div className="flex gap-2">
-                  <a
-                    href={`/api/berkas/${soalSiswa.fileId}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="rounded-lg border border-[#e2e8f0] bg-white px-3 py-1.5 text-[12px] font-medium text-[#334155] hover:bg-[#f1f5f9]"
-                  >
-                    Lihat
-                  </a>
+            {pdfSoal ? (
+              <iframe
+                src={`/api/berkas/${pdfSoal.fileId}`}
+                title={soalSiswa.judul || "Berkas soal"}
+                className="mt-3 h-[80vh] min-h-[420px] w-full rounded-xl border border-[#e2e8f0] bg-white"
+              />
+            ) : (
+              soalSiswa.fileId && (
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#e2e8f0] bg-[#fbfdff] p-3">
+                  <span className="min-w-0 truncate text-[13px] font-medium text-[#334155]">
+                    {soalSiswa.fileName || "Berkas soal"}
+                  </span>
                   <a
                     href={`/api/berkas/${soalSiswa.fileId}?mode=unduh`}
                     className="rounded-lg border border-[#e2e8f0] bg-white px-3 py-1.5 text-[12px] font-medium text-[#334155] hover:bg-[#f1f5f9]"
                   >
-                    Unduh
+                    Unduh berkas soal
                   </a>
                 </div>
-              </div>
+              )
             )}
           </>
         ) : (

@@ -2,7 +2,7 @@ import { redirect } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/server"
 import { ambilAkun, siswaSekolah, penugasanGuru, siswaCocok, type Akun, type Penugasan } from "@/lib/lms"
-import { infoUjian, namaSekolah, rekapSekolah } from "@/lib/ujian"
+import { infoUjian, namaSekolah, rekapSekolah, labelBatas, terlambat } from "@/lib/ujian"
 import { bacaSoal, kunciSoal, tingkatKelas } from "@/lib/soal"
 
 export const runtime = "edge"
@@ -51,7 +51,7 @@ export default async function NilaiPage({
             <p className="text-[11px] font-semibold uppercase tracking-wider text-[#0f766e]">Rekap &amp; penilaian</p>
             <h1 className="mt-1 text-xl font-semibold text-[#0f172a]">{ujian.nama}</h1>
             <p className="mt-1 text-sm text-[#64748b]">
-              {sekolah} · {ujian.tahunAjaran} semester {ujian.semester}
+              {sekolah} · {ujian.tahunAjaran} semester {ujian.semester} · acuan kumpul {labelBatas()}
             </p>
           </div>
           {aktif && (
@@ -59,6 +59,7 @@ export default async function NilaiPage({
               {[
                 { label: "Siswa", v: barisAktif.length },
                 { label: "Kumpul", v: barisAktif.filter((b) => b!.berkas).length },
+                { label: "Terlambat", v: barisAktif.filter((b) => terlambat(b!.berkas?.createdTime)).length },
                 { label: "Dinilai", v: barisAktif.filter((b) => b!.nilai !== "").length },
               ].map((s) => (
                 <div key={s.label} className="rounded-xl border border-[#e2e8f0] bg-[#fbfdff] px-3 py-2">
@@ -120,29 +121,26 @@ export default async function NilaiPage({
                   Soal / instruksi {aktif.p.label}{" "}
                   {ada ? `— ${s?.judul || s?.fileName || ""}` : "(belum diisi)"}
                 </summary>
-                {s?.fileId && (
-                  <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white p-3">
-                    <span className="min-w-0 truncate text-[12.5px] font-medium text-[#334155]">
-                      {s.fileName || "Berkas soal"}
-                    </span>
-                    <div className="flex gap-2">
-                      <a
-                        href={`/api/berkas/${s.fileId}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="rounded-lg border border-[#e2e8f0] px-2.5 py-1 text-[11px] font-medium text-[#334155] hover:bg-[#f1f5f9]"
-                      >
-                        Lihat
-                      </a>
+                {s?.fileId &&
+                  (s.mime === "application/pdf" ? (
+                    <iframe
+                      src={`/api/berkas/${s.fileId}`}
+                      title={s.judul || "Berkas soal"}
+                      className="mt-2 h-[70vh] min-h-[360px] w-full rounded-xl border border-[#e2e8f0] bg-white"
+                    />
+                  ) : (
+                    <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white p-3">
+                      <span className="min-w-0 truncate text-[12.5px] font-medium text-[#334155]">
+                        {s.fileName || "Berkas soal"}
+                      </span>
                       <a
                         href={`/api/berkas/${s.fileId}?mode=unduh`}
                         className="rounded-lg border border-[#e2e8f0] px-2.5 py-1 text-[11px] font-medium text-[#334155] hover:bg-[#f1f5f9]"
                       >
-                        Unduh
+                        Unduh berkas soal
                       </a>
                     </div>
-                  </div>
-                )}
+                  ))}
                 {s?.isi && (
                   <pre className="mt-2 whitespace-pre-wrap break-words rounded-xl bg-white p-3 font-sans text-[12.5px] leading-relaxed text-[#334155]">
                     {s.isi}
@@ -189,8 +187,18 @@ export default async function NilaiPage({
                           >
                             Unduh
                           </a>
+                          <span
+                            className={
+                              "ml-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold " +
+                              (terlambat(b!.berkas.createdTime)
+                                ? "bg-[#fef3c7] text-[#b45309]"
+                                : "bg-[#dcfce7] text-[#15803d]")
+                            }
+                          >
+                            {terlambat(b!.berkas.createdTime) ? "terlambat" : "tepat"}
+                          </span>
                           <span className="ml-1 text-[10px] text-[#94a3b8]">
-                            {new Date(b!.berkas.createdTime).toLocaleDateString("id-ID")}
+                            {new Date(b!.berkas.createdTime).toLocaleString("id-ID")}
                           </span>
                         </div>
                       ) : (
