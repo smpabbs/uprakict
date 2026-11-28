@@ -11,12 +11,19 @@ import {
 } from "./drive"
 import { UJIAN } from "./env"
 
+export interface BerkasSoal {
+  id: string
+  name: string
+  mime: string
+}
+
 export interface Soal {
   judul: string
   isi: string
   fileId?: string
   fileName?: string
   mime?: string
+  lampiran?: BerkasSoal | null
   updated_at?: string
   oleh?: string
 }
@@ -87,8 +94,8 @@ export async function bacaSoal(): Promise<PetaSoal> {
 }
 
 /**
- * Simpan satu slot. Berkas baru menggantikan berkas lama; teks lama
- * dipertahankan bila tidak dikirim.
+ * Simpan satu slot. Berkas baru menggantikan berkas lama; teks/lampiran lama
+ * dipertahankan bila tidak dikirim. `lampiran: null` menghapus lampiran.
  */
 export async function simpanSoal(
   kunci: string,
@@ -96,6 +103,7 @@ export async function simpanSoal(
     judul?: string
     isi?: string
     file?: { id: string; name: string; mime: string }
+    lampiran?: { id: string; name: string; mime: string } | null
     oleh: string
   }
 ): Promise<void> {
@@ -108,6 +116,7 @@ export async function simpanSoal(
     fileId: data.file?.id ?? sebelum?.fileId,
     fileName: data.file?.name ?? sebelum?.fileName,
     mime: data.file?.mime ?? sebelum?.mime,
+    lampiran: data.lampiran === undefined ? (sebelum?.lampiran ?? null) : data.lampiran,
     updated_at: new Date().toISOString(),
     oleh: data.oleh,
   }
@@ -132,10 +141,13 @@ export async function simpanSoal(
     }
   }
 
-  // berkas soal lama baru dihapus setelah metadata tersimpan
-  if (data.file && sebelum?.fileId && sebelum.fileId !== data.file.id) {
+  // berkas soal/lampiran lama baru dihapus setelah metadata tersimpan
+  const takTerpakai = [sebelum?.fileId, sebelum?.lampiran?.id]
+  const masihDipakai = [baru.fileId, baru.lampiran?.id]
+  for (const id of takTerpakai) {
+    if (!id || masihDipakai.includes(id)) continue
     try {
-      await hapusBerkas(sebelum.fileId)
+      await hapusBerkas(id)
     } catch {
       /* biarkan */
     }

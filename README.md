@@ -12,7 +12,7 @@ Cloudflare Pages: **https://uprakict.pages.dev**
 | Database | **Tidak ada.** Supabase LMS hanya dibaca (`profiles`, `sekolah`, `guru_mengajar`, `mata_pelajaran`). |
 | Berkas ujian | Google Drive: `Ujian Praktik ICT/<tahun>-<semester>/<nama sekolah>/<nis> <nama>.<ext>` |
 | Nilai | Google Sheets `_NILAI` di folder ujian (server-only) |
-| Soal/instruksi | Berkas di folder `_soal` + metadata `_soal.json`, 6 slot: kelas 7/8/9 × progul ICT & non-ICT |
+| Soal/instruksi | Berkas PDF di folder `_soal` (tampil tersemat di halaman siswa) + lampiran bebas + metadata `_soal.json`, 6 slot: kelas 7/8/9 × progul ICT & non-ICT |
 | Akses berkas | Lewat aplikasi `/api/berkas/<id>`; Google Drive tidak pernah ditautkan ke pengguna |
 | Hosting | Cloudflare Pages (runtime edge, adapter `@cloudflare/next-on-pages`) |
 
@@ -36,7 +36,7 @@ Guru juga hanya bisa mengunggah soal untuk slot (jenjang + progul) yang diampu; 
 - `/` — siswa: status kumpul + soal sesuai jenjang & progul; guru: kartu per kelas-progul
 - `/unggah` — unggah berkas (maks `UJIAN_MAKS_MB`, default 50 MB), mengganti berkas lama
 - `/nilai` — rekap per kelas-progul, input nilai & catatan, lihat/unduh berkas
-- `/soal` — admin/guru mengunggah berkas soal per slot (guru: hanya slot yang diampu)
+- `/soal` — admin/guru mengunggah berkas soal PDF + lampiran per slot (guru: hanya slot yang diampu)
 - `/api/whoami` — diagnosa sesi (`{"login":true|false}`)
 
 ## Variabel lingkungan

@@ -33,7 +33,7 @@
 - `src/lib/lms.ts` — baca akun/sekolah/penugasan dari LMS
 - `src/lib/drive.ts` — Drive + Sheets via fetch/OAuth
 - `src/lib/ujian.ts` — folder, pengumpulan, rekap, nilai
-- `src/lib/soal.ts` — 6 slot soal: berkas di folder `_soal`, metadata `_soal.json`
+- `src/lib/soal.ts` — 6 slot soal: berkas PDF + lampiran di folder `_soal`, metadata `_soal.json`
 - `src/lib/supabase/server.ts` — klien sesi (cookie)
 - `src/app/api/masuk/route.ts` — login
 - `src/app/api/unggah/route.ts` — unggah berkas

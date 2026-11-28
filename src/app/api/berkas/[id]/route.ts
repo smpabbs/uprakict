@@ -60,10 +60,12 @@ export async function GET(
   const meta = await infoBerkas(id)
   if (!meta) return new NextResponse("Berkas tidak ditemukan", { status: 404 })
 
-  // Berkas soal tinggal di folder _soal, bukan folder sekolah.
+  // Berkas soal & lampirannya tinggal di folder _soal, bukan folder sekolah.
   if (/^[789]-(ICT|NONICT) - /.test(meta.name)) {
     const peta = await bacaSoal()
-    const kunci = Object.keys(peta).find((k) => peta[k].fileId === id)
+    const kunci = Object.keys(peta).find(
+      (k) => peta[k].fileId === id || peta[k].lampiran?.id === id
+    )
     if (kunci) {
       const [tingkat, target] = kunci.split("-")
       let boleh = akun.role === "admin"

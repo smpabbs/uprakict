@@ -155,12 +155,26 @@ export default async function Beranda() {
   const tingkat = tingkatKelas(akun.kelas)
   const target = targetProgul(akun.progul)
   const mundur = waktuMundur()
-  let soalSiswa: { judul: string; isi: string; fileId?: string; fileName?: string; mime?: string } | null = null
+  let soalSiswa: {
+    judul: string
+    isi: string
+    fileId?: string
+    fileName?: string
+    mime?: string
+    lampiran?: { id: string; name: string } | null
+  } | null = null
   if (tingkat) {
     const peta = await bacaSoal()
     const s = peta[kunciSoal(tingkat, target)]
-    if (s && (s.judul || s.isi || s.fileId)) {
-      soalSiswa = { judul: s.judul, isi: s.isi, fileId: s.fileId, fileName: s.fileName, mime: s.mime }
+    if (s && (s.judul || s.isi || s.fileId || s.lampiran)) {
+      soalSiswa = {
+        judul: s.judul,
+        isi: s.isi,
+        fileId: s.fileId,
+        fileName: s.fileName,
+        mime: s.mime,
+        lampiran: s.lampiran,
+      }
     }
   }
   const pdfSoal = soalSiswa?.fileId && soalSiswa.mime === "application/pdf" ? soalSiswa : null
@@ -281,6 +295,20 @@ export default async function Beranda() {
                   </a>
                 </div>
               )
+            )}
+            {soalSiswa.lampiran && (
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#e2e8f0] bg-[#fbfdff] p-3">
+                <div className="min-w-0">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-[#94a3b8]">Lampiran</p>
+                  <p className="truncate text-[13px] font-medium text-[#334155]">{soalSiswa.lampiran.name}</p>
+                </div>
+                <a
+                  href={`/api/berkas/${soalSiswa.lampiran.id}?mode=unduh`}
+                  className="rounded-lg border border-[#e2e8f0] bg-white px-3 py-1.5 text-[12px] font-medium text-[#334155] hover:bg-[#f1f5f9]"
+                >
+                  Unduh lampiran
+                </a>
+              </div>
             )}
           </>
         ) : (

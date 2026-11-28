@@ -141,6 +141,19 @@ export default async function NilaiPage({
                       </a>
                     </div>
                   ))}
+                {s?.lampiran && (
+                  <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white p-3">
+                    <span className="min-w-0 truncate text-[12.5px] text-[#334155]">
+                      Lampiran: {s.lampiran.name}
+                    </span>
+                    <a
+                      href={`/api/berkas/${s.lampiran.id}?mode=unduh`}
+                      className="rounded-lg border border-[#e2e8f0] px-2.5 py-1 text-[11px] font-medium text-[#334155] hover:bg-[#f1f5f9]"
+                    >
+                      Unduh lampiran
+                    </a>
+                  </div>
+                )}
                 {s?.isi && (
                   <pre className="mt-2 whitespace-pre-wrap break-words rounded-xl bg-white p-3 font-sans text-[12.5px] leading-relaxed text-[#334155]">
                     {s.isi}

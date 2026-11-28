@@ -44,57 +44,94 @@ export async function POST(request: Request) {
   }
 
   const berkas = form.get("berkas")
+  const lampiranMasuk = form.get("lampiran")
+  const hapusLampiran = String(form.get("hapus_lampiran") ?? "") === "1"
   const judul = String(form.get("judul") ?? "").trim()
   const isi = String(form.get("isi") ?? "")
 
-  if (berkas instanceof File && berkas.size > 0) {
-    if (berkas.size > MAKS_BYTE) {
-      asal.searchParams.set("e", `Berkas melebihi batas ${MAKS_MB} MB.`)
-      return NextResponse.redirect(asal, 303)
-    }
+  const soalFile = berkas instanceof File && berkas.size > 0 ? berkas : null
+  const lampiranFile = lampiranMasuk instanceof File && lampiranMasuk.size > 0 ? lampiranMasuk : null
 
-    let unggahId: string | null = null
-    try {
-      // nama berkas di Drive WAJIB ASCII: Drive menolak nama non-ASCII pada unggahan
-      // multipart. Judul di metadata tetap memakai nama asli.
-      const aman = (berkas.name || "soal").normalize("NFKD").replace(/[^\x20-\x7E]/g, "")
-      const asli = (berkas.name || "soal").replace(/[\\/:*?"<>|]/g, "").trim() || "soal"
-      const namaDrive = aman.replace(/[\\/:*?"<>|]/g, "").trim() || "soal.pdf"
-      const folder = await folderSoal()
+  const salah = (pesan: string) => {
+    asal.searchParams.set("e", pesan)
+    return NextResponse.redirect(asal, 303)
+  }
+
+  // Berkas soal wajib PDF supaya bisa ditampilkan tersemat di halaman siswa;
+  // dokumen lain masuk sebagai lampiran yang bisa diunduh.
+  if (soalFile && soalFile.type !== "application/pdf") {
+    return salah("Berkas soal harus PDF. Dokumen lain silakan unggah di kolom lampiran.")
+  }
+  const terlaluBesar = [soalFile, lampiranFile].find((f) => f && f.size > MAKS_BYTE)
+  if (terlaluBesar) return salah(`Berkas melebihi batas ${MAKS_MB} MB.`)
+
+  const unggahan: string[] = []
+  const bersihkan = async () => {
+    for (const id of unggahan) {
+      try {
+        await hapusBerkas(id)
+      } catch {
+        /* biarkan */
+      }
+    }
+  }
+
+  // nama berkas di Drive WAJIB ASCII: Drive menolak nama non-ASCII pada unggahan
+  // multipart. Nama asli tetap disimpan di metadata untuk ditampilkan.
+  const namaAman = (f: File, cadangan: string) => {
+    const ascii = (f.name || cadangan).normalize("NFKD").replace(/[^\x20-\x7E]/g, "")
+    return ascii.replace(/[\\/:*?"<>|]/g, "").trim() || cadangan
+  }
+  const namaAsli = (f: File, cadangan: string) =>
+    (f.name || cadangan).replace(/[\\/:*?"<>|]/g, "").trim() || cadangan
+
+  try {
+    const folder = await folderSoal()
+
+    const data: Parameters<typeof simpanSoal>[1] = { oleh: akun.nama }
+
+    if (soalFile) {
       const hasil = await unggahBerkas(
         folder,
-        `${kunci} - ${namaDrive}`,
-        await berkas.arrayBuffer(),
-        berkas.type
+        `${kunci} - ${namaAman(soalFile, "soal.pdf")}`,
+        await soalFile.arrayBuffer(),
+        "application/pdf"
       )
-      unggahId = hasil.id
-      await simpanSoal(kunci, {
-        judul: judul || asli.replace(/\.[^.]+$/, ""),
-        file: { id: hasil.id, name: asli, mime: hasil.mimeType },
-        oleh: akun.nama,
-      })
-    } catch (e) {
-      if (unggahId) {
-        try {
-          await hapusBerkas(unggahId)
-        } catch {
-          /* biarkan */
-        }
+      unggahan.push(hasil.id)
+      data.file = { id: hasil.id, name: namaAsli(soalFile, "soal.pdf"), mime: "application/pdf" }
+      data.judul = judul || namaAsli(soalFile, "soal.pdf").replace(/\.[^.]+$/, "")
+    }
+
+    if (lampiranFile) {
+      const hasil = await unggahBerkas(
+        folder,
+        `${kunci} - lampiran - ${namaAman(lampiranFile, "lampiran")}`,
+        await lampiranFile.arrayBuffer(),
+        lampiranFile.type || "application/octet-stream"
+      )
+      unggahan.push(hasil.id)
+      data.lampiran = {
+        id: hasil.id,
+        name: namaAsli(lampiranFile, "lampiran"),
+        mime: hasil.mimeType,
       }
-      asal.searchParams.set("e", (e as Error).message)
-      return NextResponse.redirect(asal, 303)
+    } else if (hapusLampiran) {
+      data.lampiran = null
     }
-  } else {
-    if (!judul && !isi.trim()) {
-      asal.searchParams.set("e", "Pilih berkas soal atau isi judul/instruksi.")
-      return NextResponse.redirect(asal, 303)
+
+    if (!soalFile) {
+      if (judul) data.judul = judul
+      if (isi.trim() || judul) data.isi = isi
+      const adaPerubahan = Boolean(judul || isi.trim() || lampiranFile || hapusLampiran)
+      if (!adaPerubahan) {
+        return salah("Pilih berkas soal PDF, lampiran, atau isi judul/instruksi.")
+      }
     }
-    try {
-      await simpanSoal(kunci, { judul, isi, oleh: akun.nama })
-    } catch (e) {
-      asal.searchParams.set("e", (e as Error).message)
-      return NextResponse.redirect(asal, 303)
-    }
+
+    await simpanSoal(kunci, data)
+  } catch (e) {
+    await bersihkan()
+    return salah((e as Error).message)
   }
 
   asal.searchParams.set("k", kunci)

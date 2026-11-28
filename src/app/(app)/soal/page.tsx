@@ -112,6 +112,21 @@ export default async function SoalPage({
                 </div>
               )}
 
+              {isi?.lampiran && (
+                <div className="border-b border-[#e2e8f0] px-5 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-[#94a3b8]">Lampiran</p>
+                  <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#e2e8f0] bg-[#fbfdff] p-3">
+                    <p className="min-w-0 truncate text-[13px] text-[#334155]">{isi.lampiran.name}</p>
+                    <a
+                      href={`/api/berkas/${isi.lampiran.id}?mode=unduh`}
+                      className="rounded-lg border border-[#e2e8f0] px-2.5 py-1 text-[11px] font-medium text-[#334155] hover:bg-white"
+                    >
+                      Unduh lampiran
+                    </a>
+                  </div>
+                </div>
+              )}
+
               <form method="POST" action="/api/soal" encType="multipart/form-data" className="space-y-3 p-5">
                 <input type="hidden" name="kunci" value={s.kunci} />
                 <div>
@@ -127,20 +142,41 @@ export default async function SoalPage({
                 </div>
                 <div>
                   <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-[#94a3b8]">
-                    Berkas soal
+                    Berkas soal (PDF)
                   </label>
                   <input
                     type="file"
                     name="berkas"
-                    accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.txt"
+                    accept="application/pdf,.pdf"
                     className="block w-full rounded-lg border border-[#e2e8f0] px-3 py-2 text-[12px] file:mr-3 file:rounded-md file:border-0 file:bg-[#0f766e] file:px-3 file:py-1.5 file:text-[12px] file:font-semibold file:text-white"
                   />
                   <p className="mt-1 text-[11px] text-[#94a3b8]">
-                    PDF, dokumen, atau gambar. Maks {MAKS_MB} MB. Unggahan baru menggantikan berkas lama.
+                    Wajib PDF — tampil langsung di halaman siswa. Maks {MAKS_MB} MB. Unggahan baru
+                    menggantikan berkas lama.
                   </p>
                 </div>
+                <div>
+                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-[#94a3b8]">
+                    Lampiran (opsional)
+                  </label>
+                  <input
+                    type="file"
+                    name="lampiran"
+                    accept=".doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.zip,.txt,.pdf"
+                    className="block w-full rounded-lg border border-[#e2e8f0] px-3 py-2 text-[12px] file:mr-3 file:rounded-md file:border-0 file:bg-[#475569] file:px-3 file:py-1.5 file:text-[12px] file:font-semibold file:text-white"
+                  />
+                  <p className="mt-1 text-[11px] text-[#94a3b8]">
+                    Berkas pendukung bebas format, bisa diunduh siswa. Maks {MAKS_MB} MB.
+                  </p>
+                  {isi?.lampiran && (
+                    <label className="mt-2 flex items-center gap-2 text-[11px] text-[#64748b]">
+                      <input type="checkbox" name="hapus_lampiran" value="1" />
+                      Hapus lampiran saat ini ({isi.lampiran.name})
+                    </label>
+                  )}
+                </div>
                 <button className="rounded-lg bg-[#0f766e] px-4 py-2 text-[12px] font-semibold text-white transition hover:bg-[#115e59]">
-                  Unggah soal
+                  Simpan soal
                 </button>
               </form>
             </section>
