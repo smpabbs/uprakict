@@ -16,7 +16,6 @@ yarn-error.log*
 pnpm-debug.log*
 
 # build & deploy
-.open-next/
 .vercel/
 *.tsbuildinfo
 .wrangler/

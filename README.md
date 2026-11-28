@@ -63,6 +63,9 @@ npm_config_userconfig="$LOCALAPPDATA/Temp/npmrc-clean" \
 npx wrangler pages deploy .vercel/output/static --project-name=uprakict --branch=main
 ```
 
+CI: `.github/workflows/deploy.yml` hanya `workflow_dispatch` dan memakai jalur yang sama
+(next-on-pages). Butuh repo secrets + secrets runtime di project Pages.
+
 Prasyarat di folder temp (mudah hilang kalau folder dibuat ulang):
 
 1. `symlink-fallback.cjs` — preload yang mengubah `fs.symlink` menjadi copy
@@ -81,4 +84,4 @@ lalu deploy ulang.
   "An unexpected response was received from the server"). Pakai route handler + POST biasa.
 - Middleware hanya menyegarkan cookie sesi; jangan redirect permintaan RSC/prefetch/aset.
 - Semua route/page: `export const runtime = "edge"`.
-- Berkas build (`.open-next/`, `.vercel/`) tidak masuk git.
+- Berkas build (`.vercel/`) tidak masuk git.

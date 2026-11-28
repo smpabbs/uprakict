@@ -1,5 +1,10 @@
 # PLAN.md — Pengumpulan Ujian Praktik ICT (Semua Unit Sekolah)
 
+> **STATUS: DOKUMEN HISTORIS (26 Nov 2026).** Arsitektur final ada di `README.md`.
+> Rencana tabel Supabase/RLS di bawah **DIBATALKAN** oleh pemilik: aplikasi hanya
+> membaca LMS dan menyimpan semua data di Google Drive. Jangan mengikuti bagian
+> skema database di dokumen ini.
+
 Referensi: `forum-abbs` (auth LMS via NIS/username + RPC, satu project Supabase, RLS, service key server-side),
 `forum ict` (Vite+React+Supabase, email palsu mapping, seed CSV idempoten, RLS `is_guru()`, iframe lab + postMessage,
 antrean offline, ekspor CSV), `absenguru` (Flask session auth, lokasi sekolah), `absensi-guru-abbs` (dua project Supabase,

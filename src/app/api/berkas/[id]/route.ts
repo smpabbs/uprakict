@@ -8,6 +8,17 @@ import { namaSekolah, folderSekolah } from "@/lib/ujian"
 export const runtime = "edge"
 export const dynamic = "force-dynamic"
 
+// Hanya tipe ini yang boleh tampil inline. HTML/SVG unggahan siswa dipaksa unduh
+// supaya skripnya tidak berjalan di origin aplikasi saat guru klik "Lihat".
+const INLINE_AMAN = new Set([
+  "application/pdf",
+  "image/png",
+  "image/jpeg",
+  "image/gif",
+  "image/webp",
+  "text/plain",
+])
+
 /**
  * Menyajikan berkas ujian lewat aplikasi (bukan tautan Google Drive).
  * - siswa: hanya berkas miliknya
@@ -54,14 +65,17 @@ export async function GET(
   }
 
   const upstream = await unduhBerkas(id)
-  const nama = meta.name.replace(/"/g, "")
-  const inline = new URL(request.url).searchParams.get("mode") !== "unduh"
+  const nama = meta.name.replace(/["\r\n]/g, "")
+  const mime = (meta.mimeType || "application/octet-stream").split(";")[0].trim().toLowerCase()
+  const mauInline = new URL(request.url).searchParams.get("mode") !== "unduh"
+  const inline = mauInline && INLINE_AMAN.has(mime)
 
   return new NextResponse(upstream.body, {
     status: 200,
     headers: {
-      "Content-Type": meta.mimeType || "application/octet-stream",
+      "Content-Type": mime,
       "Content-Disposition": `${inline ? "inline" : "attachment"}; filename="${nama}"`,
+      "X-Content-Type-Options": "nosniff",
       "Cache-Control": "private, no-store",
     },
   })

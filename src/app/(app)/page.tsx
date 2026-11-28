@@ -32,8 +32,15 @@ export default async function Beranda() {
     )
   }
 
-  // admin/auditor diarahkan ke pengaturan soal
-  if (!["siswa", "guru"].includes(akun.role)) redirect("/soal")
+  // admin mengelola soal; peran lain tanpa halaman ujian diberi pesan (bukan redirect loop)
+  if (akun.role === "admin") redirect("/soal")
+  if (akun.role !== "siswa" && akun.role !== "guru") {
+    return (
+      <div className="rounded-2xl border border-[#fde68a] bg-[#fffbeb] p-5 text-sm text-[#92400e]">
+        Akun dengan peran {akun.role} belum punya akses ke halaman ujian. Hubungi admin sekolah.
+      </div>
+    )
+  }
 
   const [ujian, sekolah] = await Promise.all([infoUjian(), namaSekolah(akun.sekolah_id)])
 
